@@ -8,6 +8,7 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-sidebar: var(--sidebar);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
@@ -30,23 +31,24 @@
 
 :root {
   color-scheme: dark;
-  --radius: 0.625rem;
-  --background: oklch(0.16 0.025 268);
-  --foreground: oklch(0.96 0.012 275);
-  --card: oklch(0.21 0.028 270);
+  --radius: 0.875rem;
+  --background: #0e1018;
+  --foreground: #f2f1f8;
+  --sidebar: #11121b;
+  --card: #161823;
   --card-foreground: var(--foreground);
   --popover: var(--card);
   --popover-foreground: var(--foreground);
-  --primary: oklch(0.78 0.16 293);
-  --primary-foreground: var(--background);
-  --secondary: oklch(0.25 0.035 275);
+  --primary: #b9a5fc;
+  --primary-foreground: #171024;
+  --secondary: #202332;
   --secondary-foreground: var(--foreground);
   --muted: var(--secondary);
-  --muted-foreground: oklch(0.74 0.035 275);
-  --accent: oklch(0.27 0.065 291);
+  --muted-foreground: #a8abc1;
+  --accent: #222536;
   --accent-foreground: var(--foreground);
   --destructive: oklch(0.71 0.17 27);
-  --border: oklch(0.31 0.041 276);
+  --border: #2b2d40;
   --input: var(--border);
   --ring: var(--primary);
 }
@@ -62,11 +64,13 @@
 }
 
 @layer utilities {
-  .vault-background {
-    background-image: radial-gradient(
-      ellipse at top right,
-      oklch(0.29 0.096 288 / 65%),
-      transparent 65%
-    );
+  .dashboard-hero-scrim {
+    background: linear-gradient(90deg, #13101fee 5%, #13101fd1 34%, #13101f3d 72%, #13101f15 100%);
+  }
+
+  @media (width < 40rem) {
+    .dashboard-hero-scrim {
+      background: linear-gradient(90deg, #13101fef, #13101fbd 65%, #13101f85);
+    }
   }
 }
