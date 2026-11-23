@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  color-scheme: dark;
+  --radius: 0.625rem;
+  --background: oklch(0.16 0.025 268);
+  --foreground: oklch(0.96 0.012 275);
+  --card: oklch(0.21 0.028 270);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.78 0.16 293);
+  --primary-foreground: var(--background);
+  --secondary: oklch(0.25 0.035 275);
+  --secondary-foreground: var(--foreground);
+  --muted: var(--secondary);
+  --muted-foreground: oklch(0.74 0.035 275);
+  --accent: oklch(0.27 0.065 291);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.71 0.17 27);
+  --border: oklch(0.31 0.041 276);
+  --input: var(--border);
+  --ring: var(--primary);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-4 outline-ring;
+  }
+}
+
+@layer utilities {
+  .vault-background {
+    background-image: radial-gradient(
+      ellipse at top right,
+      oklch(0.29 0.096 288 / 65%),
+      transparent 65%
+    );
+  }
+}
