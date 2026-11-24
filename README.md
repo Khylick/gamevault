@@ -24,6 +24,7 @@ Pour activer la connexion, démarre les services Supabase et suis la configurati
 - `src/features/steam` contient le protocole de liaison Steam, le client Web API et l’orchestration de la synchronisation.
 - `src/features/library` contient les lectures paginées, les filtres et les formulaires de la bibliothèque, du backlog et des collections.
 - `src/features/analytics` contient les lectures des agrégats et les graphiques Recharts.
+- `src/features/advisor` contient l’appel d’outil OpenAI, les recherches côté serveur et les réponses construites à partir de la bibliothèque.
 - `src/lib/supabase` contient les clients serveur de session et de synchronisation.
 - `src/lib` contient les utilitaires transverses.
 - `components.json` indique au CLI shadcn/ui où écrire les composants et trouver les styles et alias.
@@ -51,7 +52,7 @@ Pour vérifier la reconstruction du schéma sur une base de test jetable, `npx -
 
 Les migrations SQL versionnées dans `supabase/migrations` sont la référence du schéma. Les tests sont dans `supabase/tests`.
 
-Les migrations des futurs modules suivront le même modèle. Les définitions de succès seront rattachées au catalogue, et les déblocages à la bibliothèque de chaque utilisateur. La wishlist reliera un profil à des jeux du catalogue, y compris des jeux qu’il ne possède pas. Les conversations du Game Advisor appartiendront à leur utilisateur et seront protégées par RLS.
+Les migrations des futurs modules suivront le même modèle. Les définitions de succès seront rattachées au catalogue, et les déblocages à la bibliothèque de chaque utilisateur. La wishlist reliera un profil à des jeux du catalogue, y compris des jeux qu’il ne possède pas.
 
 ## Connexion Steam et première synchronisation
 
@@ -81,13 +82,21 @@ Dans la fiche d’un jeu, tu peux l’ajouter aux favoris, compléter sa progres
 - Le temps d’un jeu est associé à chacun de ses genres renseignés. La couverture de ces métadonnées compte chaque jeu une seule fois.
 - Les jeux délaissés ont une dernière session connue de plus de 90 jours. Les ajouts récents sont datés par leur arrivée dans GameVault. Le graphique du backlog représente les statuts actuels.
 
+## Game Advisor
+
+Applique les migrations avec `npx --yes supabase@3.3.0 migration up`. Renseigne ensuite `OPENAI_API_KEY` dans `.env.local` et conserve la clé côté serveur. Le modèle par défaut est `gpt-4.1-mini`. Tu peux choisir un modèle compatible avec les appels d’outils stricts via `OPENAI_ADVISOR_MODEL`. La clé serveur Supabase sert à enregistrer les réponses calculées.
+
+Ouvre **Game Advisor** après avoir synchronisé ta bibliothèque. OpenAI reçoit la question pour sélectionner une recherche structurée. GameVault exécute cette recherche sous la session du compte connecté, puis construit la réponse avec ses données privées. Les réponses sont enregistrées dans l’historique du compte et peuvent être supprimées.
+
+Les suggestions de détente et de similarité dépendent des genres renseignés. La recherche des abandons s’appuie sur les statuts personnels et sur le temps connu lorsqu’un seuil est indiqué. Un temps cumulé Steam ne permet pas de déterminer la durée d’une session ou de complétion. Ces durées restent indiquées comme inconnues.
+
 ## Vérifications
 
 Les scripts `dev` et `build` utilisent Webpack. Turbopack a besoin d’un port interne pour compiler le CSS dans cet environnement. Le contrôle des types de Next.js s’appuie sur l’API TypeScript, ce qui évite un processus détaché lors du build.
 
 ```sh
 npm run lint       # Applique les règles ESLint de Next.js et de TypeScript
-npm test           # Vérifie la validation OpenID et les réponses de l’API Steam
+npm test           # Vérifie Steam et la validation des appels d’outil du Game Advisor
 npm run typecheck  # Génère les types des routes et vérifie TypeScript
 npm run build      # Produit le build de production
 ```
