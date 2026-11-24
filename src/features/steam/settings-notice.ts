@@ -1,7 +1,16 @@
 export const settingsNotices = {
-  "auth-sent": { message: "Consulte ta boîte mail pour ouvrir le lien de connexion dans ce navigateur.", success: true },
+  "auth-signup-sent": { message: "Si une confirmation est nécessaire, tu recevras un e-mail. Ouvre le lien dans ce navigateur.", success: true },
+  "auth-recovery-sent": { message: "Si cette adresse est associée à un compte, tu recevras un lien à ouvrir dans ce navigateur.", success: true },
+  "auth-password-required": { message: "Saisis ton mot de passe." },
+  "auth-invalid-password": { message: "Choisis un mot de passe d’au moins 8 caractères et de 72 octets maximum, puis saisis-le deux fois à l’identique." },
+  "auth-weak-password": { message: "Ce mot de passe ne respecte pas les règles de sécurité. Choisis-en un autre." },
+  "auth-same-password": { message: "Choisis un mot de passe différent du précédent." },
+  "auth-invalid-credentials": { message: "L’adresse e-mail ou le mot de passe est incorrect." },
+  "auth-email-unconfirmed": { message: "Confirme ton adresse e-mail avant de te connecter. Vérifie aussi les courriers indésirables." },
+  "auth-password-reauth": { message: "Pour modifier ton mot de passe, reconnecte-toi ou utilise « Mot de passe oublié » depuis l’écran de connexion." },
+  "auth-password-updated": { message: "Ton mot de passe a été enregistré.", success: true },
   "auth-invalid-email": { message: "Saisis une adresse e-mail valide." },
-  "auth-invalid-link": { message: "Ce lien a expiré ou a été ouvert dans un autre navigateur. Demande un nouveau lien." },
+  "auth-invalid-link": { message: "Ce lien est invalide, a expiré ou a été ouvert dans un autre navigateur." },
   "auth-rate-limit": { message: "Trop de demandes de connexion. Attends un moment avant de réessayer." },
   "auth-error": { message: "La connexion GameVault a échoué. Réessaie dans quelques instants." },
   "session-required": { message: "Connecte-toi à GameVault pour utiliser cette action." },
@@ -26,6 +35,7 @@ export const settingsNotices = {
 } satisfies Record<string, { message: string; success?: boolean }>;
 
 export type SettingsNotice = keyof typeof settingsNotices;
+export type AuthMode = "signup" | "forgot-password" | "password";
 
 export function getSettingsNotice(value: string | string[] | undefined): { message: string; success?: boolean } | null {
   return typeof value === "string" && Object.hasOwn(settingsNotices, value)
@@ -33,8 +43,8 @@ export function getSettingsNotice(value: string | string[] | undefined): { messa
     : null;
 }
 
-export function settingsLocation(notice: SettingsNotice) {
-  return "/settings?notification=" + notice;
+export function settingsLocation(notice: SettingsNotice, mode?: AuthMode) {
+  return "/settings?notification=" + notice + (mode ? "&mode=" + mode : "");
 }
 
 export function returnToSettings(notice: SettingsNotice) {

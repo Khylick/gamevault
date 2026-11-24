@@ -65,7 +65,9 @@ npx --yes supabase@3.3.0 migration up
 
 Copie `.env.example` dans `.env.local` et renseigne `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` avec la configuration locale. Garde `SUPABASE_SECRET_KEY` et `STEAM_WEB_API_KEY` réservées au serveur. Utilise [la page Steam de gestion de clé Web API](https://steamcommunity.com/dev/apikey) pour obtenir la clé Steam. En local, `APP_URL` vaut `http://localhost:3000`. Pour une instance hébergée, définis l’origine HTTPS de GameVault et autorise le retour `/auth/callback` sur cette origine dans Supabase Auth.
 
-Dans **Settings**, demande un lien de connexion GameVault, puis ouvre-le dans le même navigateur. La pile locale capture le message dans Mailpit, à l’adresse affichée par le CLI. Une fois connecté à GameVault, utilise **Connect with Steam**. Après validation OpenID, GameVault enregistre le SteamID64 et tente un premier import. Le bouton de synchronisation permet de relancer l’opération.
+Dans **Settings**, crée un compte avec ton adresse e-mail et un mot de passe, puis confirme l’adresse depuis le même navigateur. La pile locale capture le message dans Mailpit, à l’adresse affichée par le CLI. Tu peux ensuite te connecter avec ton mot de passe. Si ton compte a été créé par lien de connexion, choisis **Définir un mot de passe** dans ta session ou **Mot de passe oublié** si tu es déconnecté.
+
+Une fois connecté à GameVault, utilise **Connect with Steam**. Après validation OpenID, GameVault enregistre le SteamID64 et tente un premier import. Le bouton de synchronisation permet de relancer l’opération.
 
 L’import utilise `IPlayerService/GetOwnedGames`. La visibilité des détails de jeu sur Steam détermine l’accès à la bibliothèque. GameVault conserve les données déjà enregistrées en cas de refus, de réponse incomplète ou de liste vide. Le temps récent et la dernière date de jeu restent inconnus lorsque Steam n’a fourni aucune mesure. Les jeux sans titre peuvent être identifiés par leur AppID Steam.
 

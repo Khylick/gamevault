@@ -159,24 +159,22 @@ export function createLocalSession(origin) {
     return response;
   }
 
-  async function submitSettings(label, fields = {}) {
-    const html = await (await request("/settings")).text();
+  async function submitSettings(label, fields = {}, path = "/settings") {
+    const html = await (await request(path)).text();
     const form = [...html.matchAll(/<form\b[^>]*>[\s\S]*?<\/form>/g)].find(([tag]) => tag.includes(label))?.[0];
     const name = form?.match(/name="(\$ACTION_ID_[^"]+)"/)?.[1];
     assert.ok(name, "Formulaire introuvable pour " + label);
     const body = new FormData();
     body.set(name, "");
     for (const [key, value] of Object.entries(fields)) body.set(key, value);
-    return request("/settings", { method: "POST", headers: { Origin: origin }, body });
+    return request(path, { method: "POST", headers: { Origin: origin }, body });
   }
 
-  async function login(config, email) {
-    const sent = await submitSettings("Envoyer le lien", { email });
-    assert.match(sent.headers.get("location") ?? "", /notification=auth-sent/);
+  async function followAuthEmail(config, email, destination) {
     const messageId = await waitFor(async () => {
       const messages = await fetch(config.MAILPIT_URL + "/api/v1/messages").then((response) => response.json());
       return messages.messages.find((message) => message.To.some(({ Address }) => Address === email))?.ID;
-    }, "lien de connexion dans Mailpit");
+    }, "lien d’authentification dans Mailpit");
     const message = await fetch(config.MAILPIT_URL + "/api/v1/message/" + messageId).then((response) => response.json());
     const found = (message.HTML ?? "").match(/href="([^"]+\/auth\/v1\/verify\?[^"]+)"/)?.[1]?.replaceAll("&amp;", "&");
     assert.ok(found, "Lien Supabase absent du message local");
@@ -186,10 +184,10 @@ export function createLocalSession(origin) {
     assert.equal(callback.origin, origin);
     assert.equal(callback.pathname, "/auth/callback");
     const returned = await request(callback);
-    assert.equal(returned.headers.get("location"), "/settings");
+    assert.equal(returned.headers.get("location"), destination);
     assert.equal(returned.headers.get("referrer-policy"), "no-referrer");
     assert.ok([...cookies.values()].some(({ pair, httpOnly }) => pair.includes("auth-token") && httpOnly));
   }
 
-  return { request, submitSettings, cookies, login };
+  return { request, submitSettings, cookies, followAuthEmail };
 }

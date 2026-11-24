@@ -1,4 +1,5 @@
-import { Cable, Mail, Settings } from "lucide-react";
+import { Cable, Settings } from "lucide-react";
+import Link from "next/link";
 import type { Metadata } from "next";
 
 import { EmptyState } from "@/components/empty-state";
@@ -11,7 +12,8 @@ import { hasSupabaseServerKey } from "@/lib/supabase/admin";
 import { getAppOrigin } from "@/lib/supabase/config";
 import { createSessionClient } from "@/lib/supabase/session";
 
-import { sendSignInLink, signOut, startSteamLink, syncSteamLibrary } from "./actions";
+import { signOut, startSteamLink, syncSteamLibrary } from "./actions";
+import { PasswordForm, SignedOutForm } from "./auth-forms";
 
 export const metadata: Metadata = { title: "Paramètres" };
 
@@ -20,33 +22,6 @@ const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
   timeStyle: "short",
   timeZone: "UTC",
 });
-
-function SignInForm() {
-  return (
-    <Card className="max-w-2xl p-5 sm:p-6">
-      <h2 className="flex items-center gap-2 text-lg font-semibold">
-        <Mail className="size-4.5 text-primary" aria-hidden="true" />
-        Connexion à GameVault
-      </h2>
-      <p className="mt-2 text-sm text-muted-foreground">Un lien de connexion te permettra de retrouver tes jeux sur ce compte.</p>
-      <form action={sendSignInLink} className="mt-5 grid gap-3">
-        <label htmlFor="email" className="text-sm font-medium">Adresse e-mail</label>
-        <div className="flex flex-wrap gap-3">
-          <input
-            id="email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            required
-            maxLength={254}
-            className="min-h-11 min-w-0 flex-1 basis-50 rounded-lg border border-border bg-background px-3 text-base"
-          />
-          <SubmitButton label="Envoyer le lien" pendingLabel="Envoi en cours…" />
-        </div>
-      </form>
-    </Card>
-  );
-}
 
 type SettingsClient = NonNullable<Awaited<ReturnType<typeof createSessionClient>>>;
 
@@ -117,7 +92,7 @@ async function SteamConnection({ supabase, userId }: { supabase: SettingsClient;
 }
 
 export default async function SettingsPage({ searchParams }: PageProps<"/settings">) {
-  const { notification } = await searchParams;
+  const { mode, notification } = await searchParams;
   const notice = getSettingsNotice(notification);
   const supabase = await createSessionClient();
   const ready = supabase && getAppOrigin();
@@ -139,7 +114,9 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
       {!ready || !supabase ? (
         <EmptyState icon={Settings} title="Configuration requise" description="Configure l’origine de GameVault et la connexion Supabase pour activer les comptes." />
       ) : !claims?.sub ? (
-        <SignInForm />
+        <SignedOutForm mode={mode} />
+      ) : mode === "password" ? (
+        <PasswordForm />
       ) : (
         <>
           <Card className="flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
@@ -147,9 +124,14 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
               <h2 className="text-lg font-semibold">Compte GameVault</h2>
               {claims.email && <p className="mt-1 break-all text-sm text-muted-foreground">{claims.email}</p>}
             </div>
-            <form action={signOut}>
-              <SubmitButton label="Se déconnecter" pendingLabel="Déconnexion…" secondary />
-            </form>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link href="/settings?mode=password" className="text-sm font-medium text-primary hover:underline">
+                Définir un mot de passe
+              </Link>
+              <form action={signOut}>
+                <SubmitButton label="Se déconnecter" pendingLabel="Déconnexion…" secondary />
+              </form>
+            </div>
           </Card>
           <SteamConnection supabase={supabase} userId={claims.sub} />
         </>

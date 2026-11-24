@@ -8,7 +8,18 @@ import { openBrowser } from "./browser.mjs";
 import { createLocalSession, prepareLocalStack } from "./local.mjs";
 
 const steamId = "76561197960265729";
+const ownerEmail = "owner-e2e@example.com";
+const otherEmail = "other-e2e@example.com";
+const firstPassword = "Fixture-password-1!";
+const newPassword = "Fixture-password-2!";
 const { fetch, console } = globalThis;
+
+async function updatePassword(session, password) {
+  const updated = await session.submitSettings("Enregistrer le mot de passe", {
+    password, passwordConfirmation: password,
+  }, "/settings?mode=password");
+  assert.match(updated.headers.get("location") ?? "", /notification=auth-password-updated/);
+}
 
 async function linkSteam(session, origin) {
   const start = await session.submitSettings("Connect with Steam");
@@ -92,20 +103,37 @@ try {
   assert.equal(visitor.headers.get("x-powered-by"), null);
   assert.ok((await visitor.text()).includes("Connecte-toi à GameVault"));
 
-  const owner = createLocalSession(stack.origin);
-  await owner.login(stack.config, "owner-e2e@example.com");
-  await linkSteam(owner, stack.origin);
   const admin = createClient(stack.config.API_URL, stack.config.SECRET_KEY, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
+  const existing = await admin.auth.admin.createUser({ email: ownerEmail, email_confirm: true });
+  assert.equal(existing.error, null);
+  const owner = createLocalSession(stack.origin);
+  const recovery = await owner.submitSettings("Envoyer le lien de réinitialisation", {
+    email: ownerEmail,
+  }, "/settings?mode=forgot-password");
+  assert.match(recovery.headers.get("location") ?? "", /notification=auth-recovery-sent/);
+  await owner.followAuthEmail(stack.config, ownerEmail, "/settings?mode=password");
+  await updatePassword(owner, firstPassword);
+  await linkSteam(owner, stack.origin);
+  await updatePassword(owner, newPassword);
+  const signOut = await owner.submitSettings("Se déconnecter");
+  assert.match(signOut.headers.get("location") ?? "", /notification=signed-out/);
+  const outdated = await owner.submitSettings("Se connecter", { email: ownerEmail, password: firstPassword });
+  assert.match(outdated.headers.get("location") ?? "", /notification=auth-invalid-credentials/);
+  const signedIn = await owner.submitSettings("Se connecter", { email: ownerEmail, password: newPassword });
+  assert.equal(signedIn.headers.get("location"), "/settings");
+  assert.ok((await (await owner.request("/settings")).text()).includes(steamId));
+
   const account = await admin.from("steam_accounts").select("user_id").eq("steam_id", steamId).single();
   assert.equal(account.error, null);
   const userId = account.data.user_id;
+  assert.equal(userId, existing.data.user.id);
   const game = await admin.from("games").select("id").eq("external_id", "4000000101").single();
   assert.equal(game.error, null);
   const gameId = game.data.id;
   await addPlaytimeHistory(admin, userId, gameId);
-  console.log("Lien e-mail local, association Steam et premier import simulés validés.");
+  console.log("Compte existant, récupération, changement de mot de passe et conservation de l’association Steam validés.");
 
   browser = await openBrowser(stack, owner.cookies);
   const hasText = (text) => "document.querySelector('main').innerText.includes(" + JSON.stringify(text) + ")";
@@ -151,7 +179,13 @@ try {
   assert.deepEqual(browser.errors, []);
 
   const other = createLocalSession(stack.origin);
-  await other.login(stack.config, "other-e2e@example.com");
+  const signup = await other.submitSettings("Créer mon compte", {
+    email: otherEmail, password: firstPassword, passwordConfirmation: firstPassword,
+  }, "/settings?mode=signup");
+  assert.match(signup.headers.get("location") ?? "", /notification=auth-signup-sent/);
+  assert.ok((await (await other.request("/settings")).text()).includes("Connexion à GameVault"));
+  await other.followAuthEmail(stack.config, otherEmail, "/settings");
+  assert.ok((await (await other.request("/settings")).text()).includes(otherEmail));
   const privateGame = await (await other.request("/library/" + gameId)).text();
   assert.equal(privateGame.includes("Orbite de test"), false);
   const privateAnswer = await (await other.request(advisorPath)).text();
