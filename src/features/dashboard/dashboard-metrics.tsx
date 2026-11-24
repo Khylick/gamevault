@@ -7,7 +7,7 @@ import { formatCount, formatPlaytime, type LibrarySummary } from "./library-summ
 export function DashboardMetrics({ summary }: { summary: LibrarySummary }) {
   const metrics = [
     { label: "Jeux possédés", value: formatCount(summary.gameCount), icon: Layers3, color: "bg-primary/10 text-primary" },
-    { label: "Temps de jeu", value: formatPlaytime(summary.minutesPlayed), icon: Clock3, color: "bg-sky-400/10 text-sky-300" },
+    { label: "Temps de jeu connu", value: summary.minutesPlayed === null ? "Indisponible" : formatPlaytime(summary.minutesPlayed), icon: Clock3, color: "bg-sky-400/10 text-sky-300" },
     { label: "Terminés", value: formatCount(summary.counts.completed), icon: CircleCheck, color: "bg-emerald-400/10 text-emerald-300" },
     { label: "En cours", value: formatCount(summary.counts.playing), icon: Gamepad2, color: "bg-amber-400/10 text-amber-300" },
     { label: "Dans le backlog", value: formatCount(summary.counts.backlog), icon: ListTodo, color: "bg-pink-400/10 text-pink-300" },
@@ -28,6 +28,11 @@ export function DashboardMetrics({ summary }: { summary: LibrarySummary }) {
           </Card>
         ))}
       </dl>
+      {summary.knownPlaytimeCount < summary.gameCount && (
+        <p className="mt-3 text-sm text-muted-foreground">
+          Temps renseigné pour {formatCount(summary.knownPlaytimeCount)} sur {formatCount(summary.gameCount)} {summary.gameCount === 1 ? "jeu" : "jeux"}.
+        </p>
+      )}
     </section>
   );
 }

@@ -1,11 +1,13 @@
 import { ChartNoAxesColumnIncreasing, Gamepad2, History } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 import { Card } from "@/components/ui/card";
+import { GameCover } from "@/features/library/game-cover";
 
 import { formatPlayDate, formatPlaytime, type LibrarySummary } from "./library-summary";
 
-function RecentlyPlayed({ games }: { games: LibrarySummary["recentlyPlayed"] }) {
+function RecentlyPlayed({ games, linked }: { games: LibrarySummary["recentlyPlayed"]; linked: boolean }) {
   return (
     <section id="jeux-recents" tabIndex={-1} aria-labelledby="recently-played-title" className="min-w-0 scroll-mt-6 rounded-xl">
       <Card className="h-full p-5 sm:p-6">
@@ -17,21 +19,23 @@ function RecentlyPlayed({ games }: { games: LibrarySummary["recentlyPlayed"] }) 
           <ul className="mt-4 divide-y divide-border">
             {games.map((game) => (
               <li key={game.id} className="flex items-center gap-3 py-3 first:pt-1 last:pb-0 sm:gap-4">
-                <div className="relative aspect-video w-17 shrink-0 overflow-hidden rounded-lg bg-secondary sm:w-23">
-                  {game.cover ? (
-                    <Image src={game.cover} alt="" fill sizes="(min-width: 640px) 92px, 68px" className="object-cover object-right" />
-                  ) : (
-                    <span className="grid h-full place-items-center text-primary">
-                      <Gamepad2 className="size-5" aria-hidden="true" />
-                    </span>
-                  )}
-                </div>
+                {game.artwork ? <GameCover game={game.artwork} className="aspect-video w-17 rounded-lg sm:w-23" /> : (
+                  <div className="relative aspect-video w-17 shrink-0 overflow-hidden rounded-lg bg-secondary sm:w-23">
+                    {game.cover ? (
+                      <Image src={game.cover} alt="" fill sizes="(min-width: 640px) 92px, 68px" className="object-cover object-right" />
+                    ) : <span className="grid h-full place-items-center text-primary"><Gamepad2 className="size-5" aria-hidden="true" /></span>}
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold">{game.title}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{game.genre}</p>
+                  <p className="break-words text-sm font-semibold">
+                    {linked ? <Link href={"/library/" + game.id} className="hover:text-primary">{game.title}</Link> : game.title}
+                  </p>
+                  {game.genre && <p className="mt-0.5 text-xs text-muted-foreground">{game.genre}</p>}
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-sm font-medium tabular-nums">{formatPlaytime(game.minutesPlayed)}</p>
+                  <p className="text-sm font-medium tabular-nums">
+                    {game.minutesPlayed === null ? "Indisponible" : formatPlaytime(game.minutesPlayed)}
+                  </p>
                   <time dateTime={game.lastPlayedOn} className="text-xs text-muted-foreground">
                     {formatPlayDate(game.lastPlayedOn)}
                   </time>
@@ -49,7 +53,7 @@ function RecentlyPlayed({ games }: { games: LibrarySummary["recentlyPlayed"] }) 
 
 const shareFormatter = new Intl.NumberFormat("fr-FR", { style: "percent", maximumFractionDigits: 1 });
 
-function MostPlayed({ summary }: { summary: LibrarySummary }) {
+export function MostPlayed({ summary, linked = true }: { summary: LibrarySummary; linked?: boolean }) {
   const { mostPlayed, otherMinutes, minutesPlayed } = summary;
 
   return (
@@ -59,9 +63,9 @@ function MostPlayed({ summary }: { summary: LibrarySummary }) {
           <ChartNoAxesColumnIncreasing className="size-4.5 shrink-0 text-primary" aria-hidden="true" />
           Top 5 des jeux les plus joués
         </h2>
-        {mostPlayed.length > 0 ? (
+        {mostPlayed.length > 0 && minutesPlayed !== null && minutesPlayed > 0 ? (
           <>
-            <p className="mt-1.5 text-sm text-muted-foreground">Part du temps de jeu total</p>
+            <p className="mt-1.5 text-sm text-muted-foreground">Part du temps de jeu connu</p>
             <ol className="mt-4 space-y-3">
               {mostPlayed.map((game) => {
                 const share = game.minutesPlayed / minutesPlayed;
@@ -69,7 +73,9 @@ function MostPlayed({ summary }: { summary: LibrarySummary }) {
                 return (
                   <li key={game.id}>
                     <div className="flex items-baseline justify-between gap-3 text-sm">
-                      <span className="font-medium">{game.title}</span>
+                      <span className="min-w-0 break-words font-medium">
+                        {linked ? <Link href={"/library/" + game.id} className="hover:text-primary">{game.title}</Link> : game.title}
+                      </span>
                       <span className="shrink-0 text-muted-foreground tabular-nums">
                         {formatPlaytime(game.minutesPlayed)}
                         <span className="sr-only">, {shareFormatter.format(share)} du temps total</span>
@@ -96,11 +102,11 @@ function MostPlayed({ summary }: { summary: LibrarySummary }) {
   );
 }
 
-export function DashboardActivity({ summary }: { summary: LibrarySummary }) {
+export function DashboardActivity({ summary, linked }: { summary: LibrarySummary; linked: boolean }) {
   return (
     <div className="grid gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-      <RecentlyPlayed games={summary.recentlyPlayed} />
-      <MostPlayed summary={summary} />
+      <RecentlyPlayed games={summary.recentlyPlayed} linked={linked} />
+      <MostPlayed summary={summary} linked={linked} />
     </div>
   );
 }

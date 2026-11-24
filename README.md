@@ -12,7 +12,7 @@ npm ci
 npm run dev
 ```
 
-Ouvre [GameVault en local](http://localhost:3000). Le tableau de bord affiche des jeux et des statistiques de démonstration en développement. Les paramètres affichent l’état de l’import réel.
+Ouvre [GameVault en local](http://localhost:3000). Le tableau de bord d’un compte connecté affiche sa bibliothèque réelle. En développement, les visiteurs voient un tableau de bord de démonstration identifié.
 
 Pour activer la connexion, démarre les services Supabase et suis la configuration décrite ci-dessous.
 
@@ -23,6 +23,7 @@ Pour activer la connexion, démarre les services Supabase et suis la configurati
 - `src/features/dashboard` contient le tableau de bord, ses calculs et sa bibliothèque de démonstration.
 - `src/features/steam` contient le protocole de liaison Steam, le client Web API et l’orchestration de la synchronisation.
 - `src/features/library` contient les lectures paginées, les filtres et les formulaires de la bibliothèque, du backlog et des collections.
+- `src/features/analytics` contient les lectures des agrégats et les graphiques Recharts.
 - `src/lib/supabase` contient les clients serveur de session et de synchronisation.
 - `src/lib` contient les utilitaires transverses.
 - `components.json` indique au CLI shadcn/ui où écrire les composants et trouver les styles et alias.
@@ -72,6 +73,13 @@ L’import utilise `IPlayerService/GetOwnedGames`. La visibilité des détails d
 Après la synchronisation, ouvre **My Library** pour chercher un titre, filtrer les jeux ou passer de la grille à la liste. Les filtres figurent dans l’URL. Les genres et descriptions affichés proviennent du catalogue. Une illustration de remplacement s’affiche quand la pochette Steam est indisponible.
 
 Dans la fiche d’un jeu, tu peux l’ajouter aux favoris, compléter sa progression, l’évaluer et le placer dans plusieurs collections. Une fois le statut renseigné, le jeu apparaît dans **Backlog**, où tu peux changer son statut tout en conservant les autres champs. Dans **Collections**, tu peux créer, renommer ou supprimer une collection et retirer ses jeux.
+
+## Comprendre les statistiques
+
+- Le tableau de bord additionne les temps de jeu connus et indique combien de jeux disposent d’une mesure si la couverture est partielle.
+- **Analytics** affiche les huit dernières semaines ou les six derniers mois, période en cours comprise. Un écart entre deux relevés d’un même jeu est attribué à une période uniquement si les deux relevés y figurent. Les périodes sans mesure sont affichées comme indisponibles, les écarts entre périodes sont signalés séparément et les baisses de compteur sont écartées.
+- Le temps d’un jeu est associé à chacun de ses genres renseignés. La couverture de ces métadonnées compte chaque jeu une seule fois.
+- Les jeux délaissés ont une dernière session connue de plus de 90 jours. Les ajouts récents sont datés par leur arrivée dans GameVault. Le graphique du backlog représente les statuts actuels.
 
 ## Vérifications
 

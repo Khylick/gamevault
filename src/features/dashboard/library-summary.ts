@@ -1,16 +1,31 @@
-export type LibraryGame = {
+export type DashboardGame = {
   id: string;
   title: string;
-  genre: string;
-  status: "backlog" | "playing" | "completed";
-  minutesPlayed: number;
+  genre?: string;
+  minutesPlayed: number | null;
   lastPlayedOn?: string;
   cover?: string;
+  artwork?: { platform: string; external_id: string; cover_url: string | null };
 };
 
-type RecentlyPlayedGame = LibraryGame & { lastPlayedOn: string };
+export type LibraryGame = DashboardGame & {
+  status: "backlog" | "playing" | "completed";
+  minutesPlayed: number;
+};
 
-export function summarizeLibrary(games: readonly LibraryGame[]) {
+type RecentlyPlayedGame = DashboardGame & { lastPlayedOn: string };
+
+export type LibrarySummary = {
+  gameCount: number;
+  knownPlaytimeCount: number;
+  counts: { backlog: number; playing: number; completed: number };
+  minutesPlayed: number | null;
+  recentlyPlayed: RecentlyPlayedGame[];
+  mostPlayed: (DashboardGame & { minutesPlayed: number })[];
+  otherMinutes: number;
+};
+
+export function summarizeLibrary(games: readonly LibraryGame[]): LibrarySummary {
   const counts = { backlog: 0, playing: 0, completed: 0 };
   let minutesPlayed = 0;
 
@@ -20,7 +35,7 @@ export function summarizeLibrary(games: readonly LibraryGame[]) {
   }
 
   const recentlyPlayed = games
-    .filter((game): game is RecentlyPlayedGame => game.lastPlayedOn !== undefined)
+    .filter((game): game is LibraryGame & { lastPlayedOn: string } => game.lastPlayedOn !== undefined)
     .sort((first, second) => second.lastPlayedOn.localeCompare(first.lastPlayedOn))
     .slice(0, 3);
 
@@ -31,10 +46,8 @@ export function summarizeLibrary(games: readonly LibraryGame[]) {
 
   const otherMinutes = minutesPlayed - mostPlayed.reduce((sum, game) => sum + game.minutesPlayed, 0);
 
-  return { gameCount: games.length, counts, minutesPlayed, recentlyPlayed, mostPlayed, otherMinutes };
+  return { gameCount: games.length, knownPlaytimeCount: games.length, counts, minutesPlayed, recentlyPlayed, mostPlayed, otherMinutes };
 }
-
-export type LibrarySummary = ReturnType<typeof summarizeLibrary>;
 
 export const formatCount = new Intl.NumberFormat("fr-FR").format;
 
