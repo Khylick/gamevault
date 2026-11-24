@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test --test-isolation=none tests/*.test.mjs",
+    "test:e2e": "node tests/e2e/run.mjs",
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {

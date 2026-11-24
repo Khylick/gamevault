@@ -16,6 +16,7 @@ export const settingsNotices = {
   "steam-already-linked": { message: "Un compte Steam est déjà associé à GameVault.", success: true },
   "steam-unavailable": { message: "Steam est temporairement indisponible. Réessaie dans quelques instants." },
   "steam-rate-limit": { message: "Steam limite actuellement les requêtes. Attends quelques minutes avant de relancer l’import." },
+  "sync-rate-limit": { message: "Tu as atteint la limite horaire de synchronisation. Réessaie à l’heure suivante." },
   "steam-api-key": { message: "La clé Web API Steam est absente ou refusée. Vérifie la configuration serveur." },
   "steam-invalid-library": { message: "Steam a renvoyé des données de bibliothèque incomplètes. Les données déjà importées sont conservées." },
   "library-inaccessible": { message: "Steam ne permet pas de lire ta bibliothèque. Vérifie la visibilité des détails de jeu sur ton profil Steam, puis relance l’import." },

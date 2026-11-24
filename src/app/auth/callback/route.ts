@@ -11,5 +11,8 @@ export async function GET(request: Request) {
   const { error } = await supabase.auth.exchangeCodeForSession(codes[0]);
   if (error) return returnToSettings("auth-invalid-link");
 
-  return new Response(null, { status: 303, headers: { Location: "/settings", "Cache-Control": "no-store" } });
+  return new Response(null, {
+    status: 303,
+    headers: { Location: "/settings", "Cache-Control": "no-store", "Referrer-Policy": "no-referrer" },
+  });
 }

@@ -21,5 +21,5 @@ export function getSupabaseConfig() {
 }
 
 export function getSessionCookieOptions() {
-  return { httpOnly: true, sameSite: "lax" as const, secure: getAppOrigin()?.startsWith("https:") ?? false };
+  return { httpOnly: true, sameSite: "lax" as const, secure: getAppOrigin()?.startsWith("http:") !== true };
 }

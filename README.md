@@ -99,4 +99,7 @@ npm run lint       # Applique les règles ESLint de Next.js et de TypeScript
 npm test           # Vérifie Steam et la validation des appels d’outil du Game Advisor
 npm run typecheck  # Génère les types des routes et vérifie TypeScript
 npm run build      # Produit le build de production
+npm run test:e2e   # Rejoue les migrations et le parcours dans Chrome sur une pile locale isolée
 ```
+
+La [procédure de déploiement](docs/deploiement.md) décrit les prérequis du scénario de test, la préproduction sur Vercel et Supabase, puis les contrôles sur l’URL finale.

@@ -1,0 +1,168 @@
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import { performance } from "node:perf_hooks";
+import { URL } from "node:url";
+import { createClient } from "@supabase/supabase-js";
+
+import { openBrowser } from "./browser.mjs";
+import { createLocalSession, prepareLocalStack } from "./local.mjs";
+
+const steamId = "76561197960265729";
+const { fetch, console } = globalThis;
+
+async function linkSteam(session, origin) {
+  const start = await session.submitSettings("Connect with Steam");
+  assert.equal(start.status, 303);
+  const provider = new URL(start.headers.get("location"));
+  assert.equal(provider.origin + provider.pathname, "https://steamcommunity.com/openid/login");
+  assert.equal(provider.searchParams.get("openid.mode"), "checkid_setup");
+  const returned = new URL(provider.searchParams.get("openid.return_to"));
+  assert.equal(returned.origin, origin);
+  assert.equal(returned.pathname, "/auth/steam/callback");
+  assert.equal(session.cookies.get("gamevault_steam_state")?.httpOnly, true);
+
+  const callback = new URL(returned);
+  const identity = "https://steamcommunity.com/openid/id/" + steamId;
+  for (const [key, value] of Object.entries({
+    "openid.ns": "http://specs.openid.net/auth/2.0",
+    "openid.mode": "id_res",
+    "openid.op_endpoint": "https://steamcommunity.com/openid/login",
+    "openid.claimed_id": identity,
+    "openid.identity": identity,
+    "openid.return_to": returned.href,
+    "openid.response_nonce": new Date().toISOString().replace(/\.\d{3}Z$/, "Z") + "fixture",
+    "openid.assoc_handle": "fixture",
+    "openid.signed": "op_endpoint,claimed_id,identity,return_to,response_nonce,assoc_handle",
+    "openid.sig": "fixture",
+  })) callback.searchParams.set(key, value);
+  const completed = await session.request(callback);
+  assert.equal(completed.status, 303);
+  assert.match(completed.headers.get("location") ?? "", /notification=steam-synced/);
+  assert.equal(session.cookies.has("gamevault_steam_state"), false);
+}
+
+async function addPlaytimeHistory(admin, userId, gameId) {
+  const now = new Date();
+  const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(),
+    now.getUTCDate() - ((now.getUTCDay() + 6) % 7), 12));
+  const results = await admin.from("game_playtime").insert([
+    { captured_at: new Date(+monday - 7 * 86_400_000).toISOString(), playtime_minutes: 60 },
+    { captured_at: new Date(+monday - 4 * 86_400_000).toISOString(), playtime_minutes: 120 },
+  ].map((row) => ({ user_id: userId, game_id: gameId, ...row })));
+  assert.equal(results.error, null);
+}
+
+async function measureLargeLibrary(admin, session, userId) {
+  const extraGames = 5_000;
+  const batchSize = 250;
+  for (let start = 0; start < extraGames; start += batchSize) {
+    const entries = Array.from({ length: batchSize }, (_, index) => ({
+      id: randomUUID(), platform: "steam", external_id: String(3_900_000_000 + start + index),
+      name: "Entrée de volume " + (start + index), genres: ["Action"],
+    }));
+    assert.equal((await admin.from("games").insert(entries)).error, null);
+    assert.equal((await admin.from("user_games").insert(entries.map(({ id }, index) => ({
+      user_id: userId, game_id: id, playtime_minutes: index,
+    })))).error, null);
+  }
+
+  for (const [label, path] of [
+    ["Bibliothèque", "/library?view=list&sort=playtime"], ["Tableau de bord", "/"], ["Analytics", "/analytics"],
+  ]) {
+    const samples = [];
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const started = performance.now();
+      const response = await session.request(path);
+      assert.equal(response.status, 200);
+      const html = await response.text();
+      assert.equal(html.includes("Erreur de chargement"), false);
+      samples.push(performance.now() - started);
+    }
+    const median = Math.round(samples.toSorted((a, b) => a - b)[1]);
+    console.log(label + " · médiane locale sur trois requêtes, " + median + " ms pour 5 002 jeux.");
+  }
+}
+
+const stack = await prepareLocalStack();
+let browser;
+try {
+  const visitor = await fetch(stack.origin + "/game-advisor");
+  assert.equal(visitor.headers.get("x-frame-options"), "DENY");
+  assert.equal(visitor.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(visitor.headers.get("x-powered-by"), null);
+  assert.ok((await visitor.text()).includes("Connecte-toi à GameVault"));
+
+  const owner = createLocalSession(stack.origin);
+  await owner.login(stack.config, "owner-e2e@example.com");
+  await linkSteam(owner, stack.origin);
+  const admin = createClient(stack.config.API_URL, stack.config.SECRET_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const account = await admin.from("steam_accounts").select("user_id").eq("steam_id", steamId).single();
+  assert.equal(account.error, null);
+  const userId = account.data.user_id;
+  const game = await admin.from("games").select("id").eq("external_id", "4000000101").single();
+  assert.equal(game.error, null);
+  const gameId = game.data.id;
+  await addPlaytimeHistory(admin, userId, gameId);
+  console.log("Lien e-mail local, association Steam et premier import simulés validés.");
+
+  browser = await openBrowser(stack, owner.cookies);
+  const hasText = (text) => "document.querySelector('main').innerText.includes(" + JSON.stringify(text) + ")";
+  await browser.viewport(390, 900);
+  await browser.navigate("/library", "Ma bibliothèque");
+  await browser.wait(hasText("Orbite de test"), "jeu synchronisé dans la bibliothèque");
+  assert.equal(await browser.evaluate("document.documentElement.scrollWidth === document.documentElement.clientWidth"), true);
+  await browser.tab();
+  await browser.wait('document.activeElement.hash === "#contenu"', "lien d’accès au contenu au clavier");
+  await browser.navigate("/library/" + gameId, "Orbite de test");
+  await browser.submit("Enregistrer la progression", { status: "playing", priority: "3", goals: "Objectif de test" });
+  await browser.wait(hasText("Progression enregistrée"), "mise à jour du backlog");
+  await browser.submit("Enregistrer l’avis", { rating: "8", comment: "Note de test" });
+  await browser.wait(hasText("Avis enregistré"), "enregistrement de l’avis");
+  await browser.submit("Ajouter aux favoris");
+  await browser.wait(hasText("Retirer des favoris"), "mise en favori");
+
+  await browser.navigate("/collections", "Collections");
+  await browser.submit("Créer la collection", { name: "Collection de test", description: "" });
+  await browser.wait(hasText("Collection de test"), "création de collection");
+  const collection = await admin.from("collections").select("id").eq("user_id", userId).single();
+  assert.equal(collection.error, null);
+  await browser.navigate("/library/" + gameId, "Orbite de test");
+  await browser.submit("Ajouter", { collectionId: collection.data.id });
+  await browser.wait(`Boolean(document.querySelector('main a[href="/collections/${collection.data.id}"]'))`, "jeu ajouté à la collection");
+  await browser.navigate("/collections/" + collection.data.id, "Collection de test");
+  await browser.wait(hasText("Orbite de test"), "jeu visible dans la collection");
+
+  await browser.viewport(1440, 950);
+  await browser.navigate("/analytics", "Statistiques");
+  await browser.wait("document.querySelectorAll('.recharts-wrapper').length >= 2", "dessin des graphiques et de la progression");
+  await browser.evaluate(`document.querySelector('a[href="/analytics?period=month"]').click()`);
+  await browser.wait(hasText("Temps de jeu par mois"), "bascule sur le mois");
+  await browser.navigate("/game-advisor", "Game Advisor");
+  await browser.evaluate(`[...document.querySelectorAll('main button[type=button]')].find((button) => button.textContent.includes("jamais lancés")).click()`);
+  await browser.wait("document.querySelector('textarea').value.includes('jamais lancés')", "saisie de la question");
+  await browser.submit("Poser la question");
+  await browser.wait(hasText("Jeux sans temps de jeu enregistré"), "réponse de Game Advisor");
+  assert.equal(await browser.evaluate(hasText("Jardin de test")), true);
+  assert.equal(await browser.evaluate(hasText("Orbite de test")), false);
+  const advisorPath = await browser.evaluate("location.pathname + location.search");
+  assert.match(advisorPath, /^\/game-advisor\?conversation=/);
+  assert.deepEqual(browser.errors, []);
+
+  const other = createLocalSession(stack.origin);
+  await other.login(stack.config, "other-e2e@example.com");
+  const privateGame = await (await other.request("/library/" + gameId)).text();
+  assert.equal(privateGame.includes("Orbite de test"), false);
+  const privateAnswer = await (await other.request(advisorPath)).text();
+  assert.ok(privateAnswer.includes("Cette réponse est indisponible"));
+  assert.equal(privateAnswer.includes("Jardin de test"), false);
+  console.log("Isolation entre comptes, formulaires et graphiques validés dans Chrome à 390 et 1 440 px.");
+
+  browser.close();
+  browser = undefined;
+  await measureLargeLibrary(admin, owner, userId);
+} finally {
+  browser?.close();
+  await stack.stop();
+}

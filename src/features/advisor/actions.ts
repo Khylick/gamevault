@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { getLibraryViewer } from "@/features/library/data";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { claimExternalRequest } from "@/lib/supabase/external-requests";
 
 import { advisorHasLibrary, findAdvisorMatches, saveAdvisorConversation } from "./data";
 import { questionSchema, resolveDuration } from "./model";
@@ -29,6 +30,9 @@ export async function askAdvisor(_previous: AdvisorState, form: FormData): Promi
   let id: string | null;
   try {
     if (!(await advisorHasLibrary(viewer))) return problem("Synchronise ta bibliothèque avant de poser une question.");
+    const quota = await claimExternalRequest(admin, viewer.userId, "advisor");
+    if (quota === "limited") return problem("Tu as atteint la limite horaire de Game Advisor. Réessaie à l’heure suivante.");
+    if (quota === "error") return problem(readError);
 
     const result = await interpretAdvisorQuestion(provider, question.data);
     if (result.status === "rate-limited") return problem("Le service IA limite les demandes. Réessaie dans quelques instants.");

@@ -3,6 +3,7 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { claimExternalRequest } from "@/lib/supabase/external-requests";
 import type { createSessionClient } from "@/lib/supabase/session";
 
 import { fetchOwnedGames } from "./steam-api";
@@ -52,6 +53,9 @@ export function hasSteamApiKey() {
 export async function synchronizeSteamLibrary(admin: AdminClient, userId: string, steamId: string) {
   const key = process.env.STEAM_WEB_API_KEY?.trim();
   if (!key) return "steam-api-key";
+  const quota = await claimExternalRequest(admin, userId, "steam_sync");
+  if (quota === "limited") return "sync-rate-limit";
+  if (quota === "error") return "service-error";
 
   const observedAt = new Date().toISOString();
   const library = await fetchOwnedGames(steamId, key);
