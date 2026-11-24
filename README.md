@@ -1,6 +1,6 @@
 # GameVault
 
-GameVault est un compagnon personnel pour les bibliothèques de jeux Steam. Le tableau de bord et la navigation sont disponibles, et la phase 3 ajoute le socle Supabase local.
+GameVault est un compagnon personnel pour les bibliothèques de jeux Steam. Les paramètres permettent de se connecter à GameVault, d’associer un compte Steam et d’importer sa bibliothèque.
 
 ## Démarrage local
 
@@ -12,15 +12,17 @@ npm ci
 npm run dev
 ```
 
-Ouvre [GameVault en local](http://localhost:3000). Le tableau de bord affiche des jeux et des statistiques de démonstration en développement. Le build de production affiche l’état de bibliothèque en attente.
+Ouvre [GameVault en local](http://localhost:3000). Le tableau de bord affiche des jeux et des statistiques de démonstration en développement. Les paramètres affichent l’état de l’import réel.
 
-Les variables utilisées lors des phases suivantes sont documentées dans `.env.example`. Quand une intégration les demandera, copie le modèle dans `.env.local` et renseigne les valeurs. Les variables `NEXT_PUBLIC_*` sont destinées à être publiques. La clé Steam doit rester côté serveur.
+Pour activer la connexion, démarre les services Supabase et suis la configuration décrite ci-dessous.
 
 ## Structure
 
 - `src/app` contient les routes de l’App Router, le layout racine et les styles globaux.
 - `src/components` contient les éléments d’interface partagés. Les composants shadcn/ui vivent dans `src/components/ui`.
 - `src/features/dashboard` contient le tableau de bord, ses calculs et sa bibliothèque de démonstration.
+- `src/features/steam` contient le protocole de liaison Steam, le client Web API et l’orchestration de la synchronisation.
+- `src/lib/supabase` contient les clients serveur de session et de synchronisation.
 - `src/lib` contient les utilitaires transverses.
 - `components.json` indique au CLI shadcn/ui où écrire les composants et trouver les styles et alias.
 
@@ -45,9 +47,24 @@ Pour vérifier la reconstruction du schéma sur une base de test jetable, `npx -
 - Backlog, collections et avis appartiennent à chaque profil. Les clés étrangères composites relient ces éléments à des jeux ou à des collections du même utilisateur.
 - Les politiques RLS limitent les données privées au compte connecté. Le rôle de synchronisation serveur gère le catalogue, les associations Steam et les mesures importées. Un utilisateur connecté peut gérer ses données personnelles, dont ses favoris.
 
-Les migrations SQL versionnées dans `supabase/migrations` sont la référence du schéma. Les tests sont dans `supabase/tests`. La connexion de l’application à Supabase Auth et la synchronisation Steam seront mises en place lors de la phase 4.
+Les migrations SQL versionnées dans `supabase/migrations` sont la référence du schéma. Les tests sont dans `supabase/tests`.
 
 Les migrations des futurs modules suivront le même modèle. Les définitions de succès seront rattachées au catalogue, et les déblocages à la bibliothèque de chaque utilisateur. La wishlist reliera un profil à des jeux du catalogue, y compris des jeux qu’il ne possède pas. Les conversations du Game Advisor appartiendront à leur utilisateur et seront protégées par RLS.
+
+## Connexion Steam et première synchronisation
+
+Pour utiliser l’authentification locale, démarre la pile Supabase complète et applique les nouvelles migrations.
+
+```sh
+npx --yes supabase@3.3.0 start
+npx --yes supabase@3.3.0 migration up
+```
+
+Copie `.env.example` dans `.env.local` et renseigne `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` avec la configuration locale. Garde `SUPABASE_SECRET_KEY` et `STEAM_WEB_API_KEY` réservées au serveur. Utilise [la page Steam de gestion de clé Web API](https://steamcommunity.com/dev/apikey) pour obtenir la clé Steam. En local, `APP_URL` vaut `http://localhost:3000`. Pour une instance hébergée, définis l’origine HTTPS de GameVault et autorise le retour `/auth/callback` sur cette origine dans Supabase Auth.
+
+Dans **Settings**, demande un lien de connexion GameVault, puis ouvre-le dans le même navigateur. La pile locale capture le message dans Mailpit, à l’adresse affichée par le CLI. Une fois connecté à GameVault, utilise **Connect with Steam**. Après validation OpenID, GameVault enregistre le SteamID64 et tente un premier import. Le bouton de synchronisation permet de relancer l’opération.
+
+L’import utilise `IPlayerService/GetOwnedGames`. La visibilité des détails de jeu sur Steam détermine l’accès à la bibliothèque. GameVault conserve les données déjà enregistrées en cas de refus, de réponse incomplète ou de liste vide. Le temps récent et la dernière date de jeu restent inconnus lorsque Steam n’a fourni aucune mesure. Les jeux sans titre peuvent être identifiés par leur AppID Steam.
 
 ## Vérifications
 
@@ -55,6 +72,7 @@ Les scripts `dev` et `build` utilisent Webpack. Turbopack a besoin d’un port i
 
 ```sh
 npm run lint       # Applique les règles ESLint de Next.js et de TypeScript
+npm test           # Vérifie la validation OpenID et les réponses de l’API Steam
 npm run typecheck  # Génère les types des routes et vérifie TypeScript
 npm run build      # Produit le build de production
 ```

@@ -34,7 +34,7 @@ function DashboardHero({ game }: { game?: LibrarySummary["recentlyPlayed"][numbe
           {game ? (
             <>Dernière session le <time dateTime={game.lastPlayedOn}>{formatPlayDate(game.lastPlayedOn)}</time></>
           ) : (
-            "Connecte ton compte Steam pour retrouver tes jeux et ton activité au même endroit."
+            "Gère ton compte Steam et la synchronisation depuis les paramètres."
           )}
         </p>
         <Link
@@ -71,8 +71,8 @@ export function Dashboard({ summary }: { summary: LibrarySummary | null }) {
       ) : (
         <EmptyState
           icon={LibraryBig}
-          title="Bibliothèque en attente"
-          description="Les statistiques et les jeux récents apparaîtront après la première synchronisation Steam."
+          title="Statistiques indisponibles"
+          description="Consulte les paramètres Steam pour vérifier l’état de la synchronisation."
         />
       )}
     </div>

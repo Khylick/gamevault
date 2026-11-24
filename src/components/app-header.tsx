@@ -68,13 +68,13 @@ export function AppHeader() {
         </div>
         <NavigationLinks pathname={pathname} />
         <div className="mt-auto pt-10">
-          <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-3">
+          <Link href="/settings" className="flex items-center gap-3 rounded-xl border border-border bg-card px-3 py-3 hover:bg-accent">
             <Cable className="size-4.5 shrink-0 text-primary" aria-hidden="true" />
             <div>
               <p className="text-sm font-medium">Steam</p>
-              <p className="text-xs text-muted-foreground">Compte non connecté</p>
+              <p className="text-xs text-muted-foreground">Gérer la connexion</p>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
 
