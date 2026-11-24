@@ -1,6 +1,6 @@
 # GameVault
 
-GameVault est un compagnon personnel pour les bibliothèques de jeux Steam. Les paramètres permettent de se connecter à GameVault, d’associer un compte Steam et d’importer sa bibliothèque.
+GameVault est un compagnon personnel pour les bibliothèques de jeux Steam. Après l’import, tu peux retrouver tes jeux, suivre ta progression et créer des collections.
 
 ## Démarrage local
 
@@ -22,6 +22,7 @@ Pour activer la connexion, démarre les services Supabase et suis la configurati
 - `src/components` contient les éléments d’interface partagés. Les composants shadcn/ui vivent dans `src/components/ui`.
 - `src/features/dashboard` contient le tableau de bord, ses calculs et sa bibliothèque de démonstration.
 - `src/features/steam` contient le protocole de liaison Steam, le client Web API et l’orchestration de la synchronisation.
+- `src/features/library` contient les lectures paginées, les filtres et les formulaires de la bibliothèque, du backlog et des collections.
 - `src/lib/supabase` contient les clients serveur de session et de synchronisation.
 - `src/lib` contient les utilitaires transverses.
 - `components.json` indique au CLI shadcn/ui où écrire les composants et trouver les styles et alias.
@@ -65,6 +66,12 @@ Copie `.env.example` dans `.env.local` et renseigne `NEXT_PUBLIC_SUPABASE_URL` e
 Dans **Settings**, demande un lien de connexion GameVault, puis ouvre-le dans le même navigateur. La pile locale capture le message dans Mailpit, à l’adresse affichée par le CLI. Une fois connecté à GameVault, utilise **Connect with Steam**. Après validation OpenID, GameVault enregistre le SteamID64 et tente un premier import. Le bouton de synchronisation permet de relancer l’opération.
 
 L’import utilise `IPlayerService/GetOwnedGames`. La visibilité des détails de jeu sur Steam détermine l’accès à la bibliothèque. GameVault conserve les données déjà enregistrées en cas de refus, de réponse incomplète ou de liste vide. Le temps récent et la dernière date de jeu restent inconnus lorsque Steam n’a fourni aucune mesure. Les jeux sans titre peuvent être identifiés par leur AppID Steam.
+
+## Gérer ta bibliothèque
+
+Après la synchronisation, ouvre **My Library** pour chercher un titre, filtrer les jeux ou passer de la grille à la liste. Les filtres figurent dans l’URL. Les genres et descriptions affichés proviennent du catalogue. Une illustration de remplacement s’affiche quand la pochette Steam est indisponible.
+
+Dans la fiche d’un jeu, tu peux l’ajouter aux favoris, compléter sa progression, l’évaluer et le placer dans plusieurs collections. Une fois le statut renseigné, le jeu apparaît dans **Backlog**, où tu peux changer son statut tout en conservant les autres champs. Dans **Collections**, tu peux créer, renommer ou supprimer une collection et retirer ses jeux.
 
 ## Vérifications
 

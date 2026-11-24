@@ -8,7 +8,7 @@ import { sections } from "@/lib/navigation";
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return sections.filter(({ slug }) => slug !== "settings").map(({ slug }) => ({ section: slug }));
+  return sections.filter(({ slug }) => slug === "analytics" || slug === "game-advisor").map(({ slug }) => ({ section: slug }));
 }
 
 export async function generateMetadata({ params }: PageProps<"/[section]">): Promise<Metadata> {

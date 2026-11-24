@@ -63,6 +63,12 @@
   }
 }
 
+@layer components {
+  .library-field {
+    @apply min-h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground;
+  }
+}
+
 @layer utilities {
   .dashboard-hero-scrim {
     background: linear-gradient(90deg, #13101fee 5%, #13101fd1 34%, #13101f3d 72%, #13101f15 100%);

@@ -7,9 +7,9 @@ export function PageHeading({ title, description, children }: {
 }) {
   return (
     <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">{title}</h1>
-        {description && <p className="mt-1.5 text-muted-foreground">{description}</p>}
+      <div className="min-w-0">
+        <h1 className="break-words text-3xl font-semibold tracking-[-0.045em] sm:text-4xl">{title}</h1>
+        {description && <p className="mt-1.5 break-words text-muted-foreground">{description}</p>}
       </div>
       {children}
     </header>
