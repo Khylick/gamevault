@@ -162,12 +162,20 @@ try {
   assert.equal(await browser.evaluate(dashboardOrder), "dashboard-metrics,dashboard-hero,dashboard-top");
   assert.equal(await browser.evaluate(`document.querySelector('#dashboard-hero a').getAttribute('href')`), "/library/" + gameId);
   await browser.viewport(390, 900);
+  await browser.navigate("/settings", "Paramètres");
+  await browser.submit("Enrichir les fiches Steam");
+  await browser.wait(hasText("1 fiche enrichie."), "enrichissement d’un jeu déjà importé");
+  await browser.submit("Enrichir les fiches Steam");
+  await browser.wait(hasText("Aucune fiche Steam à enrichir pour le moment."), "évite de refaire le même lot");
   await browser.navigate("/library", "Ma bibliothèque");
   await browser.wait(hasText("Orbite de test"), "jeu synchronisé dans la bibliothèque");
   assert.equal(await browser.evaluate("document.documentElement.scrollWidth === document.documentElement.clientWidth"), true);
+  await browser.wait('[...document.querySelector(\'select[name="genre"]\').options].some((option) => option.value === "Aventure")',
+    "le genre enrichi rejoint le filtre de bibliothèque");
   await browser.tab();
   await browser.wait('document.activeElement.hash === "#contenu"', "lien d’accès au contenu au clavier");
   await browser.navigate("/library/" + gameId, "Orbite de test");
+  await browser.wait(hasText("Explore une orbite inconnue."), "description enrichie visible dans la fiche");
   await browser.wait(hasText("Temps sur 14 jours au dernier import"), "affichage de la période dans la fiche de jeu");
   await browser.wait(hasText("30\u00a0min"), "durée récente issue de Steam dans la fiche de jeu");
   assert.equal(await browser.evaluate(hasText("Premier vol")), false);

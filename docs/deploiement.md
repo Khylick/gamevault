@@ -43,6 +43,7 @@ npx --yes supabase@3.3.0 db push --remote
 
 ## Vérifier le parcours hébergé
 
+- Depuis **Paramètres**, lance **Enrichir les fiches Steam** sur une bibliothèque déjà importée. Vérifie la description dans une fiche et la présence de ses genres dans les filtres de la bibliothèque.
 - Depuis le tableau de bord, ouvre **Personnaliser**, déplace un bloc et masque-en un autre. Enregistre, recharge la page puis rétablis la disposition par défaut.
 - Dans **Wishlist**, ajoute un jeu Steam absent de ta bibliothèque avec le lien de sa fiche, vérifie que son nom et son lien s’affichent, puis retire-le.
 - Ouvre la fiche d’un jeu possédé qui propose des succès et sélectionne **Charger mes succès**. Compare le résultat à Steam et vérifie le message affiché si la confidentialité du profil empêche la lecture.

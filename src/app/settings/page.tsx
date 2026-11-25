@@ -6,6 +6,8 @@ import { EmptyState } from "@/components/empty-state";
 import { PageHeading } from "@/components/page-heading";
 import { Card } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { MutationForm } from "@/features/library/mutation-form";
+import { enrichSteamCatalog } from "@/features/steam/catalog-actions";
 import { getSettingsNotice } from "@/features/steam/settings-notice";
 import { getSteamAccount, hasSteamApiKey } from "@/features/steam/steam-service";
 import { hasSupabaseServerKey } from "@/lib/supabase/admin";
@@ -73,6 +75,14 @@ async function SteamConnection({ supabase, userId }: { supabase: SettingsClient;
             <form action={syncSteamLibrary} className="mt-5">
               <SubmitButton label="Synchroniser la bibliothèque" pendingLabel="Synchronisation en cours…" />
             </form>
+          )}
+          {serverReady && Boolean(library?.count) && (
+            <div className="mt-5 border-t border-border pt-5">
+              <p className="mb-3 text-sm text-muted-foreground">Complète les descriptions et les genres manquants par lots de 12 fiches.</p>
+              <MutationForm action={enrichSteamCatalog}>
+                <SubmitButton label="Enrichir les fiches Steam" pendingLabel="Enrichissement…" secondary />
+              </MutationForm>
+            </div>
           )}
         </>
       ) : (

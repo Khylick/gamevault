@@ -10,6 +10,15 @@ globalThis.fetch = async (input, options) => {
     assert.equal(options.body.get("openid.mode"), "check_authentication");
     return new Response("ns:http://specs.openid.net/auth/2.0\nis_valid:true\n");
   }
+  if (url.origin === "https://store.steampowered.com" && url.pathname === "/api/appdetails") {
+    const id = url.searchParams.get("appids");
+    assert.equal(url.searchParams.get("l"), "french");
+    if (id === "4000000102") return Response.json({ [id]: { success: false } });
+    assert.equal(id, "4000000101");
+    return Response.json({ [id]: { success: true, data: {
+      steam_appid: Number(id), short_description: "Explore une orbite inconnue.", genres: [{ description: "Aventure" }],
+    } } });
+  }
   if (url.origin === "https://api.steampowered.com") {
     assert.equal(new Headers(options.headers).get("x-webapi-key"), "fixture-only");
     if (url.pathname === "/ISteamUserStats/GetPlayerAchievements/v1/") {

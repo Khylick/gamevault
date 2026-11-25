@@ -77,6 +77,8 @@ Après la synchronisation, ouvre **My Library** pour chercher un titre, filtrer 
 
 Dans la fiche d’un jeu, tu peux l’ajouter aux favoris, compléter sa progression, l’évaluer et le placer dans plusieurs collections. Une fois le statut renseigné, le jeu apparaît dans **Backlog**, où tu peux changer son statut tout en conservant les autres champs. Dans **Collections**, tu peux créer, renommer ou supprimer une collection et retirer ses jeux.
 
+Dans **Paramètres → Compte Steam**, utilise **Enrichir les fiches Steam** pour compléter les descriptions courtes et les genres manquants sur les jeux déjà importés. Chaque passage traite jusqu’à 12 fiches depuis le magasin Steam. Les données reçues alimentent aussi les filtres, les statistiques par genre et les recommandations de Game Advisor.
+
 ## Consulter les succès Steam
 
 Ouvre la fiche d’un jeu Steam de ta bibliothèque et sélectionne **Charger mes succès**. GameVault interroge Steam à la demande, affiche les succès reçus et indique la date de déblocage quand elle est disponible. Une réponse inaccessible s’affiche séparément d’une liste vide. La lecture utilise la clé Steam existante et les données sont consultées sans stockage dans GameVault. [API Steamworks](https://partner.steamgames.com/doc/webapi/ISteamUserStats)
