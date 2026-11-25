@@ -3,7 +3,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path = public, extensions;
 
-SELECT plan(10);
+SELECT plan(11);
 
 INSERT INTO auth.users (id, email) VALUES
     ('00000000-0000-4000-8000-0000000000a1', 'ada@example.test'),
@@ -21,6 +21,10 @@ SELECT is(
 );
 SELECT ok(public.claim_external_request('00000000-0000-4000-8000-0000000000b2', 'advisor'), 'Le second compte a son propre quota');
 SELECT is(public.claim_external_request('00000000-0000-4000-8000-0000000000a1', 'unknown'), FALSE, 'Une opération inconnue est refusée');
+SELECT is(
+    (SELECT count(*) FROM generate_series(1, 31) WHERE public.claim_external_request('00000000-0000-4000-8000-0000000000a1', 'steam_achievements')),
+    30::BIGINT, 'La consultation des succès a son propre quota'
+);
 
 UPDATE gamevault_private.external_request_limits
 SET hour_started_at = hour_started_at - INTERVAL '1 hour'

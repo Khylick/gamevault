@@ -44,6 +44,7 @@ npx --yes supabase@3.3.0 db push --remote
 ## Vérifier le parcours hébergé
 
 - Dans **Wishlist**, ajoute un jeu Steam absent de ta bibliothèque avec le lien de sa fiche, vérifie que son nom et son lien s’affichent, puis retire-le.
+- Ouvre la fiche d’un jeu possédé qui propose des succès et sélectionne **Charger mes succès**. Compare le résultat à Steam et vérifie le message affiché si la confidentialité du profil empêche la lecture.
 - Depuis l’URL HTTPS de préproduction, crée un compte, confirme l’adresse, puis déconnecte-toi et reconnecte-toi avec ton mot de passe. Vérifie aussi le parcours **Mot de passe oublié**. Associe un compte Steam de test et vérifie le nombre de jeux importés puis l’état affiché pour une bibliothèque inaccessible en modifiant la confidentialité du profil Steam.
 - Consulte un jeu importé, modifie son statut et vérifie qu’il apparaît dans le backlog. Consulte Analytics et vérifie la distinction entre temps connu et données indisponibles. Pose une question au Game Advisor avec une clé OpenAI du projet de test.
 - Compare le temps sur 14 jours d’un jeu dans **Joués récemment** et dans sa fiche après synchronisation. Si Steam ne fournit pas la date de dernière session, vérifie qu’elle reste indiquée comme inconnue.

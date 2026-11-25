@@ -149,6 +149,11 @@ try {
   await browser.navigate("/library/" + gameId, "Orbite de test");
   await browser.wait(hasText("Temps sur 14 jours au dernier import"), "affichage de la période dans la fiche de jeu");
   await browser.wait(hasText("30\u00a0min"), "durée récente issue de Steam dans la fiche de jeu");
+  assert.equal(await browser.evaluate(hasText("Premier vol")), false);
+  await browser.submit("Charger mes succès");
+  await browser.wait(hasText("1 / 2"), "nombre de succès débloqués");
+  await browser.wait(hasText("Premier vol"), "succès Steam récupéré à la demande");
+  await browser.wait(hasText("Verrouillé"), "distinction entre succès débloqués et verrouillés");
   await browser.submit("Enregistrer la progression", { status: "playing", priority: "3", goals: "Objectif de test" });
   await browser.wait(hasText("Progression enregistrée"), "mise à jour du backlog");
   await browser.submit("Enregistrer l’avis", { rating: "8", comment: "Note de test" });
@@ -166,6 +171,12 @@ try {
   await browser.wait(`Boolean(document.querySelector('main a[href="/collections/${collection.data.id}"]'))`, "jeu ajouté à la collection");
   await browser.navigate("/collections/" + collection.data.id, "Collection de test");
   await browser.wait(hasText("Orbite de test"), "jeu visible dans la collection");
+
+  const garden = await admin.from("games").select("id").eq("external_id", "4000000102").single();
+  assert.equal(garden.error, null);
+  await browser.navigate("/library/" + garden.data.id, "Jardin de test");
+  await browser.submit("Charger mes succès");
+  await browser.wait(hasText("Steam ne fournit pas les succès de ce jeu"), "message lorsque les succès sont inaccessibles");
 
   await browser.navigate("/wishlist", "Wishlist");
   await browser.submit("Ajouter à la wishlist", { steamApp: "https://store.steampowered.com/app/4000000103/" });
@@ -201,6 +212,7 @@ try {
   assert.ok((await (await other.request("/settings")).text()).includes(otherEmail));
   const privateGame = await (await other.request("/library/" + gameId)).text();
   assert.equal(privateGame.includes("Orbite de test"), false);
+  assert.equal(privateGame.includes("Charger mes succès"), false);
   const privateWishlist = await (await other.request("/wishlist")).text();
   assert.equal(privateWishlist.includes("Horizon convoité"), false);
   const privateAnswer = await (await other.request(advisorPath)).text();

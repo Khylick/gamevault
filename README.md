@@ -77,6 +77,10 @@ Après la synchronisation, ouvre **My Library** pour chercher un titre, filtrer 
 
 Dans la fiche d’un jeu, tu peux l’ajouter aux favoris, compléter sa progression, l’évaluer et le placer dans plusieurs collections. Une fois le statut renseigné, le jeu apparaît dans **Backlog**, où tu peux changer son statut tout en conservant les autres champs. Dans **Collections**, tu peux créer, renommer ou supprimer une collection et retirer ses jeux.
 
+## Consulter les succès Steam
+
+Ouvre la fiche d’un jeu Steam de ta bibliothèque et sélectionne **Charger mes succès**. GameVault interroge Steam à la demande, affiche les succès reçus et indique la date de déblocage quand elle est disponible. Une réponse inaccessible s’affiche séparément d’une liste vide. La lecture utilise la clé Steam existante et les données sont consultées sans stockage dans GameVault. [API Steamworks](https://partner.steamgames.com/doc/webapi/ISteamUserStats)
+
 ## Ajouter des jeux à la wishlist
 
 Depuis **Wishlist**, colle le lien d’une fiche Steam ou saisis son AppID. GameVault réutilise le jeu s’il figure déjà dans son catalogue. Sinon, il vérifie son AppID et récupère son nom auprès de Steam avec `STEAM_WEB_API_KEY`. La liste est privée et disponible dès que tu es connecté à GameVault. Si tu importes ensuite ce jeu dans ta bibliothèque, la wishlist affiche un lien vers sa fiche. [Catalogue Steam](https://partner.steamgames.com/doc/webapi/IStoreService)

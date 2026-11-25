@@ -12,6 +12,17 @@ globalThis.fetch = async (input, options) => {
   }
   if (url.origin === "https://api.steampowered.com") {
     assert.equal(new Headers(options.headers).get("x-webapi-key"), "fixture-only");
+    if (url.pathname === "/ISteamUserStats/GetPlayerAchievements/v1/") {
+      const appId = url.searchParams.get("appid");
+      if (appId === "4000000102") {
+        return Response.json({ playerstats: { success: false } }, { status: 400 });
+      }
+      assert.equal(appId, "4000000101");
+      return Response.json({ playerstats: { success: true, achievements: [
+        { apiname: "FIRST_FLIGHT", name: "Premier vol", achieved: 1, unlocktime: 1_795_523_400 },
+        { apiname: "LANDING", name: "Atterrissage", achieved: 0, unlocktime: 0 },
+      ] } });
+    }
     if (url.pathname === "/IStoreService/GetAppList/v1/") {
       assert.equal(JSON.parse(url.searchParams.get("input_json")).last_appid, 4_000_000_102);
       return Response.json({ response: { apps: [{ appid: 4_000_000_103, name: "Horizon convoité" }] } });

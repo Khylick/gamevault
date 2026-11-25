@@ -6,6 +6,7 @@ import { z } from "zod";
 import { PageHeading } from "@/components/page-heading";
 import { Card } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { AchievementPanel } from "@/features/achievements/achievement-panel";
 import { saveFavorite } from "@/features/library/actions";
 import { getLibraryViewer, listCollections, listMemberships, readGame } from "@/features/library/data";
 import { GameCover } from "@/features/library/game-cover";
@@ -59,6 +60,7 @@ export default async function GamePage({ params }: PageProps<"/library/[id]">) {
         <ReviewForm game={game} />
       </div>
       <GameCollections gameId={id.data} collections={collections} memberships={memberships} />
+      {game.platform === "steam" && <AchievementPanel key={id.data} gameId={id.data} />}
     </div>
   );
 }
