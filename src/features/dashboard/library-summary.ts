@@ -14,6 +14,8 @@ export type LibraryGame = DashboardGame & {
 };
 
 type RecentlyPlayedGame = DashboardGame & { lastPlayedOn: string };
+type RecentActivityGame = Omit<DashboardGame, "lastPlayedOn"> & { lastPlayedOn: string | null; recentMinutes: number };
+export type ActivityGame = RecentlyPlayedGame | RecentActivityGame;
 
 export type LibrarySummary = {
   gameCount: number;
@@ -21,6 +23,7 @@ export type LibrarySummary = {
   counts: { backlog: number; playing: number; completed: number };
   minutesPlayed: number | null;
   recentlyPlayed: RecentlyPlayedGame[];
+  recentActivity?: RecentActivityGame[];
   mostPlayed: (DashboardGame & { minutesPlayed: number })[];
   otherMinutes: number;
 };

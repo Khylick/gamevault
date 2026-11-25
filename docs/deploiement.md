@@ -45,6 +45,7 @@ npx --yes supabase@3.3.0 db push --remote
 
 - Depuis l’URL HTTPS de préproduction, crée un compte, confirme l’adresse, puis déconnecte-toi et reconnecte-toi avec ton mot de passe. Vérifie aussi le parcours **Mot de passe oublié**. Associe un compte Steam de test et vérifie le nombre de jeux importés puis l’état affiché pour une bibliothèque inaccessible en modifiant la confidentialité du profil Steam.
 - Consulte un jeu importé, modifie son statut et vérifie qu’il apparaît dans le backlog. Consulte Analytics et vérifie la distinction entre temps connu et données indisponibles. Pose une question au Game Advisor avec une clé OpenAI du projet de test.
+- Compare le temps sur 14 jours d’un jeu dans **Joués récemment** et dans sa fiche après synchronisation. Si Steam ne fournit pas la date de dernière session, vérifie qu’elle reste indiquée comme inconnue.
 - Ouvre une deuxième session avec un autre compte. Vérifie que les fiches et réponses du premier compte lui restent inaccessibles. Si l’instance est destinée à un usage personnel, configure les inscriptions dans Supabase Auth et l’accès au déploiement dans Vercel en fonction des comptes autorisés. [Sécurité Supabase](https://supabase.com/docs/guides/security/production-checklist) · [Protection des déploiements Vercel](https://vercel.com/docs/deployment-protection)
 
 ## Passer en production

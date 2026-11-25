@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { URL, URLSearchParams } from "node:url";
 
 import { buildSteamSignInUrl, verifySteamAssertion } from "../src/features/steam/openid.ts";
-import { fetchOwnedGames } from "../src/features/steam/steam-api.ts";
+import { fetchOwnedGames, fetchSteamLibrary } from "../src/features/steam/steam-api.ts";
 
 const origin = "https://vault.example.test";
 const state = "a".repeat(64);
@@ -128,5 +128,50 @@ test("Convertit les erreurs HTTP de l’API en états d’interface", async () =
   for (const [http, status] of [[403, "steam-api-key"], [429, "steam-rate-limit"], [503, "steam-unavailable"]]) {
     const result = await fetchOwnedGames(steamId, "test-key", async () => new Response(null, { status: http }));
     assert.deepEqual(result, { status });
+  }
+});
+
+test("Complète les durées récentes par AppID sans déduire de date ni modifier la possession", async () => {
+  const result = await fetchSteamLibrary(steamId, "test-key", async (url, init) => {
+    if (url.pathname.endsWith("/GetOwnedGames/v1/")) {
+      return Response.json({ response: { game_count: 4, games: [
+        { appid: 1, playtime_forever: 100 },
+        { appid: 2, playtime_forever: 95, playtime_2weeks: 0 },
+        { appid: 3, playtime_forever: 8 },
+        { appid: 4, playtime_forever: 20 },
+      ] } });
+    }
+    assert.equal(url.pathname, "/IPlayerService/GetRecentlyPlayedGames/v1/");
+    assert.equal(url.searchParams.get("steamid"), steamId);
+    assert.equal(url.searchParams.get("count"), "0");
+    assert.equal(url.searchParams.has("key"), false);
+    assert.equal(init.headers["x-webapi-key"], "test-key");
+    return Response.json({ response: { total_count: 4, games: [
+      { appid: 1, playtime_2weeks: 30 },
+      { appid: 2, playtime_2weeks: 15 },
+      { appid: 3, playtime_2weeks: 10 },
+      { appid: 5, playtime_2weeks: 60 },
+    ] } });
+  });
+  assert.equal(result.status, "available");
+  assert.deepEqual(result.games.map(({ external_id, recent_playtime_minutes, last_played_at }) =>
+    [external_id, recent_playtime_minutes, last_played_at]), [
+    ["1", 30, null], ["2", 0, null], ["3", null, null], ["4", null, null],
+  ]);
+});
+
+test("Conserve le résultat de l’import quand l’activité Steam est indisponible ou incohérente", async () => {
+  const owned = { response: { game_count: 1, games: [{ appid: 1, playtime_forever: 100 }] } };
+  const expected = await fetchOwnedGames(steamId, "test-key", async () => Response.json(owned));
+  for (const response of [
+    new Response(null, { status: 429 }),
+    Response.json({ response: {} }),
+    Response.json({ response: { total_count: 0 } }),
+    Response.json({ response: { total_count: 2, games: [{ appid: 1, playtime_2weeks: 30 }] } }),
+    Response.json({ response: { total_count: 2, games: [{ appid: 1, playtime_2weeks: 30 }, { appid: 1 }] } }),
+  ]) {
+    const result = await fetchSteamLibrary(steamId, "test-key", async (url) =>
+      url.pathname.endsWith("/GetOwnedGames/v1/") ? Response.json(owned) : response);
+    assert.deepEqual(result, expected);
   }
 });

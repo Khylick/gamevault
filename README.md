@@ -69,7 +69,7 @@ Dans **Settings**, crée un compte avec ton adresse e-mail et un mot de passe, p
 
 Une fois connecté à GameVault, utilise **Connect with Steam**. Après validation OpenID, GameVault enregistre le SteamID64 et tente un premier import. Le bouton de synchronisation permet de relancer l’opération.
 
-L’import utilise `IPlayerService/GetOwnedGames`. La visibilité des détails de jeu sur Steam détermine l’accès à la bibliothèque. GameVault conserve les données déjà enregistrées en cas de refus, de réponse incomplète ou de liste vide. Le temps récent et la dernière date de jeu restent inconnus lorsque Steam n’a fourni aucune mesure. Les jeux sans titre peuvent être identifiés par leur AppID Steam.
+L’import utilise `IPlayerService/GetOwnedGames`. Si des temps récents manquent, GameVault interroge aussi `IPlayerService/GetRecentlyPlayedGames` pour compléter les jeux importés. La visibilité des détails de jeu sur Steam détermine les données accessibles. GameVault conserve la bibliothèque déjà importée quand Steam refuse l’accès ou renvoie une liste vide ou incomplète. L’import peut aboutir si seule la requête d’activité échoue. Les jeux sans titre peuvent être identifiés par leur AppID Steam. [API Steamworks](https://partner.steamgames.com/doc/webapi/IPlayerService)
 
 ## Gérer ta bibliothèque
 
@@ -80,6 +80,7 @@ Dans la fiche d’un jeu, tu peux l’ajouter aux favoris, compléter sa progres
 ## Comprendre les statistiques
 
 - Le tableau de bord additionne les temps de jeu connus et indique combien de jeux disposent d’une mesure si la couverture est partielle.
+- Le bloc **Joués récemment** affiche les durées sur 14 jours au dernier import, avec la date de dernière session si elle est connue. En l’absence d’activité mesurée sur cette période, le tableau de bord affiche les dernières sessions connues lorsqu’elles sont disponibles.
 - **Analytics** affiche les huit dernières semaines ou les six derniers mois, période en cours comprise. Un écart entre deux relevés d’un même jeu est attribué à une période uniquement si les deux relevés y figurent. Les périodes sans mesure sont affichées comme indisponibles, les écarts entre périodes sont signalés séparément et les baisses de compteur sont écartées.
 - Le temps d’un jeu est associé à chacun de ses genres renseignés. La couverture de ces métadonnées compte chaque jeu une seule fois.
 - Les jeux délaissés ont une dernière session connue de plus de 90 jours. Les ajouts récents sont datés par leur arrivée dans GameVault. Le graphique du backlog représente les statuts actuels.

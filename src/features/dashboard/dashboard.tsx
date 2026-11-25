@@ -9,9 +9,10 @@ import { GameCover } from "@/features/library/game-cover";
 
 import { DashboardActivity } from "./dashboard-activity";
 import { DashboardMetrics } from "./dashboard-metrics";
-import { formatPlayDate, type LibrarySummary } from "./library-summary";
+import { formatPlayDate, formatPlaytime, type ActivityGame, type LibrarySummary } from "./library-summary";
 
-function DashboardHero({ game }: { game?: LibrarySummary["recentlyPlayed"][number] }) {
+function DashboardHero({ game }: { game?: ActivityGame }) {
+  const recentMinutes = game && "recentMinutes" in game ? game.recentMinutes : null;
   return (
     <Card className="relative isolate flex min-h-63 items-center overflow-hidden border-violet-400/25 bg-[#171326]">
       {game?.artwork ? (
@@ -28,13 +29,17 @@ function DashboardHero({ game }: { game?: LibrarySummary["recentlyPlayed"][numbe
       <div aria-hidden="true" className="dashboard-hero-scrim absolute inset-0 -z-10" />
       <div className="px-5 py-7 sm:max-w-lg sm:px-9 sm:py-9">
         {game && (
-          <p className="mb-3 text-xs font-semibold tracking-[0.13em] text-primary uppercase">Dernier jeu lancé</p>
+          <p className="mb-3 text-xs font-semibold tracking-[0.13em] text-primary uppercase">
+            {recentMinutes === null ? "Dernier jeu lancé" : "Activité Steam récente"}
+          </p>
         )}
         <h2 className="break-words text-3xl leading-tight font-semibold tracking-[-0.05em] sm:text-[2.75rem]">
           {game ? game.title : "Ta bibliothèque Steam"}
         </h2>
         <p className="mt-2.5 max-w-sm text-base text-[#d2cbe3]">
-          {game ? (
+          {recentMinutes !== null ? (
+            <>{formatPlaytime(recentMinutes)} sur 14 jours au dernier import.</>
+          ) : game?.lastPlayedOn ? (
             <>Dernière session le <time dateTime={game.lastPlayedOn}>{formatPlayDate(game.lastPlayedOn)}</time></>
           ) : (
             "Gère ton compte Steam et la synchronisation depuis les paramètres."
@@ -53,6 +58,8 @@ function DashboardHero({ game }: { game?: LibrarySummary["recentlyPlayed"][numbe
 }
 
 export function Dashboard({ summary, demo = false }: { summary: LibrarySummary | null; demo?: boolean }) {
+  const recentActivity = summary?.recentActivity;
+  const activity = recentActivity?.length ? recentActivity : summary?.recentlyPlayed ?? [];
   return (
     <div className="grid gap-5 sm:gap-6">
       <PageHeading title="Tableau de bord" description="Ta bibliothèque Steam en un coup d’œil.">
@@ -64,12 +71,12 @@ export function Dashboard({ summary, demo = false }: { summary: LibrarySummary |
         )}
       </PageHeading>
 
-      <DashboardHero game={summary?.recentlyPlayed[0]} />
+      <DashboardHero game={activity[0]} />
 
       {summary && summary.gameCount > 0 ? (
         <>
           <DashboardMetrics summary={summary} />
-          <DashboardActivity summary={summary} linked={!demo} />
+          <DashboardActivity summary={summary} games={activity} recent={Boolean(recentActivity?.length)} linked={!demo} />
         </>
       ) : (
         <EmptyState

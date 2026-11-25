@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { claimExternalRequest } from "@/lib/supabase/external-requests";
 import type { createSessionClient } from "@/lib/supabase/session";
 
-import { fetchOwnedGames } from "./steam-api";
+import { fetchSteamLibrary } from "./steam-api";
 
 type SessionClient = NonNullable<Awaited<ReturnType<typeof createSessionClient>>>;
 type AdminClient = NonNullable<ReturnType<typeof createAdminClient>>;
@@ -58,7 +58,7 @@ export async function synchronizeSteamLibrary(admin: AdminClient, userId: string
   if (quota === "error") return "service-error";
 
   const observedAt = new Date().toISOString();
-  const library = await fetchOwnedGames(steamId, key);
+  const library = await fetchSteamLibrary(steamId, key);
   if (library.status !== "available") return library.status;
 
   const { data, error } = await admin.rpc("sync_steam_library", {

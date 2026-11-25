@@ -45,7 +45,7 @@ export default async function GamePage({ params }: PageProps<"/library/[id]">) {
           </div>
           <dl className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div><dt className="text-sm text-muted-foreground">Temps total</dt><dd className="mt-1"><Playtime minutes={game.playtime_minutes} /></dd></div>
-            <div><dt className="text-sm text-muted-foreground">Temps récent</dt><dd className="mt-1"><Playtime minutes={game.recent_playtime_minutes} /></dd></div>
+            <div><dt className="text-sm text-muted-foreground">Temps sur 14 jours au dernier import</dt><dd className="mt-1"><Playtime minutes={game.recent_playtime_minutes} /></dd></div>
             <div><dt className="text-sm text-muted-foreground">Dernière session</dt><dd className="mt-1">{game.last_played_at ? formatLibraryDate(game.last_played_at) : "Indisponible"}</dd></div>
             <div><dt className="text-sm text-muted-foreground">Ajout dans GameVault</dt><dd className="mt-1">{formatLibraryDate(game.created_at)}</dd></div>
           </dl>

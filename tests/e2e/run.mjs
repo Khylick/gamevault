@@ -138,12 +138,17 @@ try {
   browser = await openBrowser(stack, owner.cookies);
   const hasText = (text) => "document.querySelector('main').innerText.includes(" + JSON.stringify(text) + ")";
   await browser.viewport(390, 900);
+  await browser.navigate("/", "Tableau de bord");
+  await browser.wait(hasText("30\u00a0min sur 14 jours au dernier import."), "durée récente issue de Steam dans le tableau de bord");
+  await browser.wait(hasText("Date inconnue"), "absence de date exacte de dernière session");
   await browser.navigate("/library", "Ma bibliothèque");
   await browser.wait(hasText("Orbite de test"), "jeu synchronisé dans la bibliothèque");
   assert.equal(await browser.evaluate("document.documentElement.scrollWidth === document.documentElement.clientWidth"), true);
   await browser.tab();
   await browser.wait('document.activeElement.hash === "#contenu"', "lien d’accès au contenu au clavier");
   await browser.navigate("/library/" + gameId, "Orbite de test");
+  await browser.wait(hasText("Temps sur 14 jours au dernier import"), "affichage de la période dans la fiche de jeu");
+  await browser.wait(hasText("30\u00a0min"), "durée récente issue de Steam dans la fiche de jeu");
   await browser.submit("Enregistrer la progression", { status: "playing", priority: "3", goals: "Objectif de test" });
   await browser.wait(hasText("Progression enregistrée"), "mise à jour du backlog");
   await browser.submit("Enregistrer l’avis", { rating: "8", comment: "Note de test" });

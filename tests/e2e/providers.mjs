@@ -11,10 +11,13 @@ globalThis.fetch = async (input, options) => {
     return new Response("ns:http://specs.openid.net/auth/2.0\nis_valid:true\n");
   }
   if (url.origin === "https://api.steampowered.com") {
-    assert.equal(url.pathname, "/IPlayerService/GetOwnedGames/v1/");
     assert.equal(new Headers(options.headers).get("x-webapi-key"), "fixture-only");
+    if (url.pathname === "/IPlayerService/GetRecentlyPlayedGames/v1/") {
+      return Response.json({ response: { total_count: 1, games: [{ appid: 4_000_000_101, playtime_2weeks: 30 }] } });
+    }
+    assert.equal(url.pathname, "/IPlayerService/GetOwnedGames/v1/");
     return Response.json({ response: { game_count: 2, games: [
-      { appid: 4_000_000_101, name: "Orbite de test", playtime_forever: 180, playtime_2weeks: 30 },
+      { appid: 4_000_000_101, name: "Orbite de test", playtime_forever: 180 },
       { appid: 4_000_000_102, name: "Jardin de test", playtime_forever: 0 },
     ] } });
   }

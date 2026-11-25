@@ -5,16 +5,17 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { GameCover } from "@/features/library/game-cover";
 
-import { formatPlayDate, formatPlaytime, type LibrarySummary } from "./library-summary";
+import { formatPlayDate, formatPlaytime, type ActivityGame, type LibrarySummary } from "./library-summary";
 
-function RecentlyPlayed({ games, linked }: { games: LibrarySummary["recentlyPlayed"]; linked: boolean }) {
+function RecentlyPlayed({ games, recent, linked }: { games: ActivityGame[]; recent: boolean; linked: boolean }) {
   return (
     <section id="jeux-recents" tabIndex={-1} aria-labelledby="recently-played-title" className="min-w-0 scroll-mt-6 rounded-xl">
       <Card className="h-full p-5 sm:p-6">
         <h2 id="recently-played-title" className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
           <History className="size-4.5 shrink-0 text-primary" aria-hidden="true" />
-          Joués récemment
+          {recent ? "Joués récemment" : "Dernières sessions connues"}
         </h2>
+        {recent && <p className="mt-1.5 text-sm text-muted-foreground">Temps sur 14 jours au dernier import Steam</p>}
         {games.length > 0 ? (
           <ul className="mt-4 divide-y divide-border">
             {games.map((game) => (
@@ -34,11 +35,14 @@ function RecentlyPlayed({ games, linked }: { games: LibrarySummary["recentlyPlay
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="text-sm font-medium tabular-nums">
-                    {game.minutesPlayed === null ? "Indisponible" : formatPlaytime(game.minutesPlayed)}
+                    {"recentMinutes" in game ? formatPlaytime(game.recentMinutes)
+                      : game.minutesPlayed === null ? "Indisponible" : formatPlaytime(game.minutesPlayed) + " au total"}
                   </p>
-                  <time dateTime={game.lastPlayedOn} className="text-xs text-muted-foreground">
-                    {formatPlayDate(game.lastPlayedOn)}
-                  </time>
+                  {game.lastPlayedOn ? (
+                    <time dateTime={game.lastPlayedOn} className="text-xs text-muted-foreground">
+                      {formatPlayDate(game.lastPlayedOn)}
+                    </time>
+                  ) : <p className="text-xs text-muted-foreground">Date inconnue</p>}
                 </div>
               </li>
             ))}
@@ -102,10 +106,12 @@ export function MostPlayed({ summary, linked = true }: { summary: LibrarySummary
   );
 }
 
-export function DashboardActivity({ summary, linked }: { summary: LibrarySummary; linked: boolean }) {
+export function DashboardActivity({ summary, games, recent, linked }: {
+  summary: LibrarySummary; games: ActivityGame[]; recent: boolean; linked: boolean;
+}) {
   return (
     <div className="grid gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-      <RecentlyPlayed games={summary.recentlyPlayed} linked={linked} />
+      <RecentlyPlayed games={games} recent={recent} linked={linked} />
       <MostPlayed summary={summary} linked={linked} />
     </div>
   );

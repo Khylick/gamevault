@@ -7,18 +7,20 @@ import type { LibraryViewer } from "@/features/library/data";
 const count = z.number().int().nonnegative();
 const instant = z.iso.datetime({ offset: true });
 const rankedGame = z.object({ id: z.uuid(), title: z.string(), minutesPlayed: count });
+const datedActivity = rankedGame.extend({
+  genre: z.string(),
+  minutesPlayed: count.nullable(),
+  lastPlayedOn: instant,
+  artwork: z.object({ platform: z.string(), external_id: z.string(), cover_url: z.string().nullable() }),
+});
 
 const summarySchema = z.object({
   gameCount: count,
   knownPlaytimeCount: count,
   counts: z.object({ backlog: count, playing: count, completed: count }),
   minutesPlayed: count.nullable(),
-  recentlyPlayed: rankedGame.extend({
-    genre: z.string(),
-    minutesPlayed: count.nullable(),
-    lastPlayedOn: instant,
-    artwork: z.object({ platform: z.string(), external_id: z.string(), cover_url: z.string().nullable() }),
-  }).array(),
+  recentlyPlayed: datedActivity.array(),
+  recentActivity: datedActivity.extend({ recentMinutes: count.positive(), lastPlayedOn: instant.nullable() }).array().optional(),
   mostPlayed: rankedGame.array(),
   otherMinutes: count,
 });

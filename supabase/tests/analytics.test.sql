@@ -3,7 +3,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path = public, extensions;
 
-SELECT plan(22);
+SELECT plan(25);
 
 INSERT INTO auth.users (id, email) VALUES
     ('00000000-0000-4000-8000-0000000000a1', 'ada@example.test'),
@@ -24,6 +24,8 @@ INSERT INTO public.backlog_items (user_id, game_id, status) VALUES
     ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000101', 'playing'),
     ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000102', 'completed'),
     ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000103', 'to_start');
+UPDATE public.user_games SET recent_playtime_minutes = 10
+WHERE game_id IN ('00000000-0000-4000-8000-000000000103', '00000000-0000-4000-8000-000000000104');
 
 INSERT INTO public.game_playtime (user_id, game_id, captured_at, playtime_minutes)
 SELECT '00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000101', observed_at, minutes
@@ -45,6 +47,9 @@ SELECT is(public.dashboard_summary()->>'minutesPlayed', '300', 'Le temps connu e
 SELECT is(public.dashboard_summary()->>'knownPlaytimeCount', '2', 'Une mesure nulle et une mesure inconnue restent distinctes');
 SELECT is(public.dashboard_summary()->'counts', '{"backlog":1,"completed":1,"playing":1}'::JSONB, 'Les compteurs de statut correspondent aux données');
 SELECT is(public.dashboard_summary()->'recentlyPlayed'->0->>'title', 'Orbite', 'Le jeu connu le plus récemment joué est en tête');
+SELECT is(jsonb_array_length(public.dashboard_summary()->'recentActivity'), 1, 'L’activité récente exclut le jeu privé du second compte');
+SELECT is(public.dashboard_summary()->'recentActivity'->0->>'recentMinutes', '10', 'L’activité récente inclut une durée connue sans date');
+SELECT is(public.dashboard_summary()->'recentActivity'->0->'lastPlayedOn', 'null'::JSONB, 'Une durée récente ne produit aucune date de session');
 SELECT is(jsonb_array_length(public.dashboard_summary()->'mostPlayed'), 1, 'Le classement exclut les durées nulles et inconnues');
 
 SELECT is(public.library_analytics()->'genreMinutes', '[{"label":"Action","minutes":300},{"label":"RPG","minutes":300}]'::JSONB, 'Un jeu contribue une fois à chacun de ses genres');

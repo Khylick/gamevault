@@ -22,6 +22,13 @@ const librarySchema = z.object({
   }),
 });
 
+const activitySchema = z.object({
+  response: z.object({
+    total_count: z.number().int().min(0).max(50_000),
+    games: z.array(z.object({ appid: uint32.min(1), playtime_2weeks: minutes.optional() })).max(50_000).optional(),
+  }),
+});
+
 type OwnedGame = {
   external_id: string;
   name: string | null;
@@ -34,27 +41,32 @@ export type SteamLibraryResult =
   | { status: "available"; games: OwnedGame[] }
   | { status: "library-inaccessible" | "steam-rate-limit" | "steam-api-key" | "steam-invalid-library" | "steam-unavailable" };
 
-export async function fetchOwnedGames(steamId: string, key: string, fetcher = fetch): Promise<SteamLibraryResult> {
-  const url = new URL("https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/");
-  url.search = new URLSearchParams({
-    steamid: steamId,
-    include_appinfo: "1",
-    include_played_free_games: "1",
-    format: "json",
-  }).toString();
-
-  let response: Response;
+async function requestPlayerService(
+  method: "GetOwnedGames" | "GetRecentlyPlayedGames", parameters: Record<string, string>, key: string,
+  fetcher: typeof fetch, timeout: number,
+) {
+  const url = new URL(`https://api.steampowered.com/IPlayerService/${method}/v1/`);
+  url.search = new URLSearchParams({ ...parameters, format: "json" }).toString();
   try {
-    response = await fetcher(url, {
+    return await fetcher(url, {
       headers: { "x-webapi-key": key },
       cache: "no-store",
       redirect: "error",
-      signal: AbortSignal.timeout(8_000),
+      signal: AbortSignal.timeout(timeout),
     });
   } catch {
-    return { status: "steam-unavailable" };
+    return null;
   }
+}
 
+export async function fetchOwnedGames(steamId: string, key: string, fetcher = fetch): Promise<SteamLibraryResult> {
+  const response = await requestPlayerService("GetOwnedGames", {
+    steamid: steamId,
+    include_appinfo: "1",
+    include_played_free_games: "1",
+  }, key, fetcher, 8_000);
+
+  if (!response) return { status: "steam-unavailable" };
   if (response.status === 429) return { status: "steam-rate-limit" };
   if (response.status === 401 || response.status === 403) return { status: "steam-api-key" };
   if (!response.ok) return { status: "steam-unavailable" };
@@ -78,5 +90,34 @@ export async function fetchOwnedGames(steamId: string, key: string, fetcher = fe
       recent_playtime_minutes: game.playtime_2weeks ?? null,
       last_played_at: game.rtime_last_played ? new Date(game.rtime_last_played * 1000).toISOString() : null,
     })),
+  };
+}
+
+export async function fetchSteamLibrary(steamId: string, key: string, fetcher = fetch): Promise<SteamLibraryResult> {
+  const library = await fetchOwnedGames(steamId, key, fetcher);
+  if (library.status !== "available" || !library.games.some((game) => game.recent_playtime_minutes === null)) {
+    return library;
+  }
+
+  const reply = await requestPlayerService("GetRecentlyPlayedGames", {
+    steamid: steamId,
+    count: "0",
+  }, key, fetcher, 2_500);
+  if (!reply?.ok) return library;
+
+  const parsed = activitySchema.safeParse(await reply.json().catch(() => null));
+  if (!parsed.success) return library;
+  const { total_count, games = [] } = parsed.data.response;
+  const recentMinutes = new Map(games.map((game) => [String(game.appid), game.playtime_2weeks]));
+  if (total_count !== games.length || recentMinutes.size !== games.length) return library;
+
+  return {
+    status: "available",
+    games: library.games.map((game) => {
+      const recent = recentMinutes.get(game.external_id);
+      if (game.recent_playtime_minutes !== null || recent === undefined
+        || (game.playtime_minutes !== null && recent > game.playtime_minutes)) return game;
+      return { ...game, recent_playtime_minutes: recent };
+    }),
   };
 }
