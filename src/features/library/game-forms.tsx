@@ -58,16 +58,28 @@ export function ReviewForm({ game }: { game: LibraryEntry }) {
       <h2 className="text-lg font-semibold">Avis personnel</h2>
       <MutationForm action={saveReview} className="mt-4 grid gap-4">
         <input type="hidden" name="gameId" value={game.game_id} />
-        <label className="grid max-w-36 gap-1.5 text-sm">
-          Note sur 10
-          <input type="number" name="rating" defaultValue={game.rating ?? ""} min={1} max={10} className="library-field" />
-        </label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="grid gap-1.5 text-sm">
+            Note sur 10
+            <input type="number" name="rating" defaultValue={game.rating ?? ""} min={1} max={10} className="library-field" />
+          </label>
+          <label className="grid gap-1.5 text-sm">
+            Année de la note <span className="sr-only">(facultative)</span>
+            <input type="number" name="ratingYear" defaultValue={game.rating_year ?? ""} min={1900} max={2100}
+              placeholder={game.steam_release_year?.toString()} aria-describedby="rating-year-help" className="library-field" />
+          </label>
+        </div>
+        <p id="rating-year-help" className="text-xs text-muted-foreground">
+          {game.steam_release_year
+            ? <>Année de sortie Steam utilisée si le champ reste vide · {game.steam_release_year}</>
+            : "Si le champ reste vide, l’année de sortie Steam sera utilisée dès qu’elle sera connue."}
+        </p>
         <label className="grid gap-1.5 text-sm">
           Commentaire
           <textarea name="comment" defaultValue={game.comment ?? ""} maxLength={3000} rows={3} className="library-field resize-y" />
         </label>
         {(game.rating !== null || game.comment) && (
-          <p className="text-xs text-muted-foreground">Vide les deux champs et enregistre pour supprimer ton avis.</p>
+          <p className="text-xs text-muted-foreground">Efface la note et le commentaire pour supprimer ton avis.</p>
         )}
         <div><SubmitButton label="Enregistrer l’avis" pendingLabel="Enregistrement…" /></div>
       </MutationForm>

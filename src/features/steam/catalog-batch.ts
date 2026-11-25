@@ -32,6 +32,7 @@ export async function processSteamMetadataBatch(
         p_reserved_until: game.reserved_until,
         p_description: metadata.status === "available" ? metadata.description : null,
         p_genres: metadata.status === "available" ? metadata.genres : [],
+        p_release_year: metadata.status === "available" ? metadata.releaseYear : null,
       });
       if (error || typeof data !== "boolean") return "unavailable";
       return data ? "enriched" : "unchanged";

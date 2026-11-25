@@ -8,12 +8,13 @@ const detailsSchema = z.discriminatedUnion("success", [
       steam_appid: z.number().int(),
       short_description: z.string().max(4000).optional(),
       genres: z.array(z.object({ description: z.string().trim().min(1).max(120) })).max(100).optional(),
+      release_date: z.object({ coming_soon: z.boolean(), date: z.string().max(120) }).optional().catch(undefined),
     }),
   }),
 ]);
 
 type SteamMetadataResult =
-  | { status: "available"; description: string | null; genres: string[] }
+  | { status: "available"; description: string | null; genres: string[]; releaseYear: number | null }
   | { status: "missing" | "rate-limited" | "unavailable" };
 
 const entities: Record<string, string> = { amp: "&", quot: '"', apos: "'", lt: "<", gt: ">", nbsp: " " };
@@ -45,11 +46,14 @@ export async function fetchSteamMetadata(appId: string, fetcher = fetch): Promis
     if (!parsed.data.success) return { status: "missing" };
     const data = parsed.data.data;
     if (String(data.steam_appid) !== appId) return { status: "unavailable" };
+    const years = data.release_date?.coming_soon === false
+      ? data.release_date.date.match(/\b(?:19\d{2}|20\d{2}|2100)\b/g) : null;
 
     return {
       status: "available",
       description: data.short_description ? plainText(data.short_description) : null,
       genres: [...new Set(data.genres?.map((genre) => genre.description))],
+      releaseYear: years?.length === 1 ? Number(years[0]) : null,
     };
   } catch {
     return { status: "unavailable" };

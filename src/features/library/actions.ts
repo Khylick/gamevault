@@ -81,11 +81,17 @@ export async function saveProgress(_previous: MutationResult, form: FormData) {
 }
 
 export async function saveReview(_previous: MutationResult, form: FormData) {
-  return mutate(z.object({ gameId, rating: optionalNumber(10), comment: optionalText(3000) }), form,
+  const ratingYear = z.union([z.literal(""), z.coerce.number().int().min(1900).max(2100)]).default("");
+  const result = await mutate(z.object({ gameId, rating: optionalNumber(10), comment: optionalText(3000), ratingYear }), form,
     ({ db, userId }, values) => values.rating === null && values.comment === null
       ? db.from("user_reviews").delete().eq("user_id", userId).eq("game_id", values.gameId)
-      : db.rpc("save_library_review", { p_game_id: values.gameId, p_rating: values.rating, p_comment: values.comment }),
+      : db.rpc("save_library_review", {
+        p_game_id: values.gameId, p_rating: values.rating, p_comment: values.comment,
+        p_rating_year: values.rating === null || values.ratingYear === "" ? null : values.ratingYear,
+      }),
     "Avis enregistré.");
+  if (result && !result.error) revalidatePath("/classements");
+  return result;
 }
 
 const collectionFields = z.object({ name: z.string().trim().min(1).max(120), description: optionalText(1000) });

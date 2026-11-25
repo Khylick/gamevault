@@ -16,11 +16,13 @@ globalThis.fetch = async (input, options) => {
     if (id === "4000000105") return new Response(null, { status: 429 });
     if (id === "4000000104") return Response.json({ [id]: { success: true, data: {
       steam_appid: Number(id), short_description: "Une fiche enrichie par le planificateur.", genres: [{ description: "Simulation" }],
+      release_date: { coming_soon: false, date: "26 févr. 2016" },
     } } });
     if (id === "4000000102") return Response.json({ [id]: { success: false } });
     assert.equal(id, "4000000101");
     return Response.json({ [id]: { success: true, data: {
       steam_appid: Number(id), short_description: "Explore une orbite inconnue.", genres: [{ description: "Aventure" }],
+      release_date: { coming_soon: false, date: "18 avr. 2011" },
     } } });
   }
   if (url.origin === "https://api.steampowered.com") {

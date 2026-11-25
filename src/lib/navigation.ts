@@ -7,6 +7,7 @@ import {
   ListTodo,
   Settings,
   Sparkles,
+  Trophy,
 } from "lucide-react";
 
 export const dashboardLink = { href: "/", label: "Dashboard", icon: LayoutDashboard };
@@ -46,6 +47,13 @@ export const sections = [
     title: "Statistiques",
     description: "Les analyses de tes habitudes de jeu s’appuieront sur l’activité disponible dans GameVault.",
     icon: ChartNoAxesCombined,
+  },
+  {
+    slug: "classements",
+    label: "Classements",
+    title: "Classements",
+    description: "Retrouve tes jeux les mieux notés par année.",
+    icon: Trophy,
   },
   {
     slug: "game-advisor",

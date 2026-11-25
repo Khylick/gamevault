@@ -42,7 +42,7 @@ function NavigationLinks({ pathname, onNavigate }: { pathname: string; onNavigat
                 )}
               >
                 <Icon className="size-4.5 shrink-0" aria-hidden="true" />
-                <span lang="en">{label}</span>
+                <span lang={href === "/classements" ? "fr" : "en"}>{label}</span>
               </Link>
             </li>
           );

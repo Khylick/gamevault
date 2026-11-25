@@ -3,17 +3,17 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path = public, extensions;
 
-SELECT plan(18);
+SELECT plan(20);
 
 INSERT INTO auth.users (id, email) VALUES
     ('00000000-0000-4000-8000-0000000000a1', 'ada@example.test'),
     ('00000000-0000-4000-8000-0000000000b2', 'bob@example.test');
 INSERT INTO public.users (id) SELECT id FROM auth.users WHERE email IN ('ada@example.test', 'bob@example.test');
 
-INSERT INTO public.games (id, platform, external_id, name, description, genres) VALUES
-    ('00000000-0000-4000-8000-000000000001', 'steam', '101', 'Premier jeu', NULL, ARRAY['Action']),
-    ('00000000-0000-4000-8000-000000000002', 'steam', '102', 'Jeu complet', 'Description existante.', ARRAY['Simulation']),
-    ('00000000-0000-4000-8000-000000000003', 'steam', '103', 'Jeu de Bob', NULL, '{}');
+INSERT INTO public.games (id, platform, external_id, name, description, genres, steam_release_year) VALUES
+    ('00000000-0000-4000-8000-000000000001', 'steam', '101', 'Premier jeu', NULL, ARRAY['Action'], 2011),
+    ('00000000-0000-4000-8000-000000000002', 'steam', '102', 'Jeu complet', 'Description existante.', ARRAY['Simulation'], 2016),
+    ('00000000-0000-4000-8000-000000000003', 'steam', '103', 'Jeu de Bob', NULL, '{}', NULL);
 INSERT INTO public.user_games (user_id, game_id) VALUES
     ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000001'),
     ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000002'),
@@ -40,6 +40,14 @@ SELECT ok(
 );
 SELECT is((SELECT description FROM public.games WHERE external_id = '101'), 'Une description Steam.', 'La description enrichie rejoint le catalogue');
 SELECT is((SELECT genres FROM public.games WHERE external_id = '101'), ARRAY['Action'::TEXT], 'Le genre déjà présent est conservé');
+UPDATE public.games SET steam_release_year = NULL WHERE external_id = '102';
+SELECT results_eq(
+    $$SELECT external_id FROM public.reserve_steam_metadata_batch('00000000-0000-4000-8000-0000000000a1')$$,
+    ARRAY['102'::TEXT], 'Une fiche déjà enrichie redevient éligible si seule l’année de sortie manque'
+);
+SELECT ok(public.save_steam_metadata('00000000-0000-4000-8000-000000000002',
+    (SELECT steam_metadata_retry_at FROM public.games WHERE external_id = '102'), NULL, '{}', 2016::SMALLINT),
+    'Le traitement peut compléter l’année seule');
 
 SELECT results_eq(
     $$SELECT external_id FROM public.reserve_steam_metadata_batch('00000000-0000-4000-8000-0000000000b2')$$,

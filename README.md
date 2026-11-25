@@ -87,6 +87,10 @@ Ouvre la fiche d’un jeu Steam de ta bibliothèque et sélectionne **Charger me
 
 Depuis **Wishlist**, colle le lien d’une fiche Steam ou saisis son AppID. GameVault réutilise le jeu s’il figure déjà dans son catalogue. Sinon, il vérifie son AppID et récupère son nom auprès de Steam avec `STEAM_WEB_API_KEY`. La liste est privée et disponible dès que tu es connecté à GameVault. Si tu importes ensuite ce jeu dans ta bibliothèque, la wishlist affiche un lien vers sa fiche. [Catalogue Steam](https://partner.steamgames.com/doc/webapi/IStoreService)
 
+## Retrouver tes meilleures notes
+
+Ouvre **Classements** pour retrouver tes jeux notés sur 10, regroupés par année. Tu peux choisir **Année de la note** dans la fiche du jeu. Si le champ est vide, GameVault utilise l’année de sortie Steam lorsqu’elle est disponible. Les autres notes apparaissent dans **Sans année**. Les jeux de même note partagent le même rang dans leur groupe.
+
 ## Comprendre les statistiques
 
 - Depuis le tableau de bord, **Personnaliser** permet de choisir quels blocs afficher et de changer leur ordre. Enregistre la disposition pour la retrouver sur ton compte. Tu peux retrouver l’ordre et la visibilité d’origine avec **Rétablir la disposition par défaut**, puis enregistrer.

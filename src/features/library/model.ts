@@ -33,6 +33,8 @@ export type LibraryEntry = {
   finished_on: string | null;
   rating: number | null;
   comment: string | null;
+  rating_year?: number | null;
+  steam_release_year?: number | null;
 };
 
 export type Collection = { id: string; name: string; description: string | null };

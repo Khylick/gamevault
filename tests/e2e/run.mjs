@@ -188,6 +188,17 @@ try {
   await browser.wait(hasText("Progression enregistrée"), "mise à jour du backlog");
   await browser.submit("Enregistrer l’avis", { rating: "8", comment: "Note de test" });
   await browser.wait(hasText("Avis enregistré"), "enregistrement de l’avis");
+  await browser.navigate("/classements", "Classements");
+  await browser.wait('document.querySelector("#classement-2011")?.closest("section").innerText.includes("Orbite de test")',
+    "classement selon l’année de sortie Steam");
+  await browser.navigate("/library/" + gameId, "Orbite de test");
+  await browser.submit("Enregistrer l’avis", { rating: "8", ratingYear: "2026", comment: "Note de test" });
+  await browser.wait(hasText("Avis enregistré"), "enregistrement d’une année de note");
+  await browser.navigate("/classements", "Classements");
+  await browser.wait('document.querySelector("#classement-2026")?.closest("section").innerText.includes("Orbite de test")',
+    "l’année choisie prime sur l’année Steam");
+  assert.equal(await browser.evaluate('Boolean(document.querySelector("#classement-2011"))'), false);
+  await browser.navigate("/library/" + gameId, "Orbite de test");
   await browser.submit("Ajouter aux favoris");
   await browser.wait(hasText("Retirer des favoris"), "mise en favori");
 
@@ -243,6 +254,9 @@ try {
   const privateGame = await (await other.request("/library/" + gameId)).text();
   assert.equal(privateGame.includes("Orbite de test"), false);
   assert.equal(privateGame.includes("Charger mes succès"), false);
+  const privateRankings = await (await other.request("/classements")).text();
+  assert.equal(privateRankings.includes("Orbite de test"), false);
+  assert.ok(privateRankings.includes("Aucun jeu noté"));
   const privateWishlist = await (await other.request("/wishlist")).text();
   assert.equal(privateWishlist.includes("Horizon convoité"), false);
   const privateAnswer = await (await other.request(advisorPath)).text();
@@ -277,9 +291,9 @@ try {
   assert.equal(cron.status, 200);
   assert.deepEqual(await cron.json(), { status: "retry-pending", reserved: 2, enriched: 1 });
   assert.deepEqual(await (await fetch(cronUrl, { headers })).json(), { status: "skipped" });
-  const scheduledGame = await admin.from("games").select("description,genres").eq("id", scheduledIds[0]).single();
+  const scheduledGame = await admin.from("games").select("description,genres,steam_release_year").eq("id", scheduledIds[0]).single();
   assert.equal(scheduledGame.error, null);
-  assert.deepEqual(scheduledGame.data, { description: "Une fiche enrichie par le planificateur.", genres: ["Simulation"] });
+  assert.deepEqual(scheduledGame.data, { description: "Une fiche enrichie par le planificateur.", genres: ["Simulation"], steam_release_year: 2016 });
   const settingsAfterCron = await (await owner.request("/settings")).text();
   assert.match(settingsAfterCron.replace(/<!--.*?-->/g, ""), /2 fiches prêtes[\s\S]*?2 à compléter/);
   assert.equal((await admin.from("user_games").delete().eq("user_id", userId).in("game_id", scheduledIds)).error, null);

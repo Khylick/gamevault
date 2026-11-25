@@ -15,16 +15,19 @@ test("Lit les genres du magasin Steam et traite la description comme du texte", 
       steam_appid: 620,
       short_description: "<p>Un &quot;jeu&quot; d&#39;énigmes.</p><p>A &amp; B.</p>",
       genres: [{ description: "Action" }, { description: " Aventure " }, { description: "Action" }],
+      release_date: { coming_soon: false, date: "18 avr. 2011" },
     } } });
   });
-  assert.deepEqual(result, { status: "available", description: 'Un "jeu" d\'énigmes. A & B.', genres: ["Action", "Aventure"] });
+  assert.deepEqual(result, { status: "available", description: 'Un "jeu" d\'énigmes. A & B.', genres: ["Action", "Aventure"], releaseYear: 2011 });
 });
 
 test("Vérifie l’AppID et distingue les données absentes d’une erreur temporaire", async () => {
   const cases = [
     [Response.json({ 620: { success: false } }), { status: "missing" }],
     [Response.json({ 620: { success: true, data: { steam_appid: 620 } } }),
-      { status: "available", description: null, genres: [] }],
+      { status: "available", description: null, genres: [], releaseYear: null }],
+    [Response.json({ 620: { success: true, data: { steam_appid: 620, release_date: { coming_soon: true, date: "2029" } } } }),
+      { status: "available", description: null, genres: [], releaseYear: null }],
     [Response.json({ 620: { success: true, data: { steam_appid: 622 } } }), { status: "unavailable" }],
     [new Response(null, { status: 429 }), { status: "rate-limited" }],
     [new Response(null, { status: 503 }), { status: "unavailable" }],
