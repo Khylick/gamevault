@@ -1,4 +1,4 @@
-import { Cable, History, LibraryBig } from "lucide-react";
+import { Cable, History, LibraryBig, SlidersHorizontal } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -7,12 +7,15 @@ import { PageHeading } from "@/components/page-heading";
 import { Card } from "@/components/ui/card";
 import { GameCover } from "@/features/library/game-cover";
 
-import { DashboardActivity } from "./dashboard-activity";
+import { MostPlayed, RecentlyPlayed } from "./dashboard-activity";
 import { DashboardMetrics } from "./dashboard-metrics";
+import { defaultDashboardLayout, type DashboardLayout } from "./layout";
 import { formatPlayDate, formatPlaytime, type ActivityGame, type LibrarySummary } from "./library-summary";
 
-function DashboardHero({ game }: { game?: ActivityGame }) {
+function DashboardHero({ game, showActivity, demo }: { game?: ActivityGame; showActivity: boolean; demo: boolean }) {
   const recentMinutes = game && "recentMinutes" in game ? game.recentMinutes : null;
+  const activityLink = game && showActivity;
+  const gameLink = game && !demo && !activityLink;
   return (
     <Card className="relative isolate flex min-h-63 items-center overflow-hidden border-violet-400/25 bg-[#171326]">
       {game?.artwork ? (
@@ -46,20 +49,36 @@ function DashboardHero({ game }: { game?: ActivityGame }) {
           )}
         </p>
         <Link
-          href={game ? "#jeux-recents" : "/settings"}
+          href={activityLink ? "#jeux-recents" : gameLink ? "/library/" + game.id : "/settings"}
           className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-[#d0c0ff]"
         >
-          {game ? <History className="size-4" aria-hidden="true" /> : <Cable className="size-4" aria-hidden="true" />}
-          {game ? "Voir l’activité" : "Paramètres Steam"}
+          {activityLink ? <History className="size-4" aria-hidden="true" /> : gameLink
+            ? <LibraryBig className="size-4" aria-hidden="true" /> : <Cable className="size-4" aria-hidden="true" />}
+          {activityLink ? "Voir l’activité" : gameLink ? "Voir la fiche du jeu" : "Paramètres Steam"}
         </Link>
       </div>
     </Card>
   );
 }
 
-export function Dashboard({ summary, demo = false }: { summary: LibrarySummary | null; demo?: boolean }) {
+export function Dashboard({ summary, layout, demo = false }: {
+  summary: LibrarySummary | null; layout?: DashboardLayout | null; demo?: boolean;
+}) {
+  const { block_order, hidden_blocks } = layout ?? defaultDashboardLayout;
+  const visible = block_order.filter((block) => !hidden_blocks.includes(block));
+  const hasLibrary = Boolean(summary?.gameCount);
+  const displayOrder = hasLibrary ? visible : visible.filter((block) => block === "hero");
+  const recentIndex = displayOrder.indexOf("recent");
+  const topIndex = displayOrder.indexOf("top");
+  const paired = recentIndex >= 0 && topIndex >= 0 && Math.abs(recentIndex - topIndex) === 1;
   const recentActivity = summary?.recentActivity;
   const activity = recentActivity?.length ? recentActivity : summary?.recentlyPlayed ?? [];
+  const blocks = {
+    hero: <DashboardHero game={activity[0]} showActivity={recentIndex >= 0} demo={demo} />,
+    metrics: summary && <DashboardMetrics summary={summary} />,
+    recent: <RecentlyPlayed games={activity} recent={Boolean(recentActivity?.length)} linked={!demo} />,
+    top: summary && <MostPlayed summary={summary} linked={!demo} />,
+  };
   return (
     <div className="grid gap-5 sm:gap-6">
       <PageHeading title="Tableau de bord" description="Ta bibliothèque Steam en un coup d’œil.">
@@ -69,16 +88,26 @@ export function Dashboard({ summary, demo = false }: { summary: LibrarySummary |
             Données de démonstration
           </p>
         )}
+        {layout && (
+          <Link href="/dashboard/personnaliser" className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-medium hover:bg-accent">
+            <SlidersHorizontal className="size-4" aria-hidden="true" />
+            Personnaliser
+          </Link>
+        )}
       </PageHeading>
 
-      <DashboardHero game={activity[0]} />
-
-      {summary && summary.gameCount > 0 ? (
-        <>
-          <DashboardMetrics summary={summary} />
-          <DashboardActivity summary={summary} games={activity} recent={Boolean(recentActivity?.length)} linked={!demo} />
-        </>
-      ) : (
+      {displayOrder.length > 0 && (
+        <div className="grid gap-x-4 gap-y-5 sm:gap-y-6 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+          {displayOrder.map((block) => (
+            <div key={block} id={"dashboard-" + block} className={paired && (block === "recent" || block === "top") ? "min-w-0" : "min-w-0 md:col-span-2"}>
+              {blocks[block]}
+            </div>
+          ))}
+        </div>
+      )}
+      {visible.length === 0 ? (
+        <EmptyState icon={SlidersHorizontal} title="Tous les blocs sont masqués" description="Utilise Personnaliser pour réafficher les blocs de ton choix." />
+      ) : !hasLibrary && (
         <EmptyState
           icon={LibraryBig}
           title={summary ? "Bibliothèque vide" : "Statistiques indisponibles"}

@@ -137,10 +137,31 @@ try {
 
   browser = await openBrowser(stack, owner.cookies);
   const hasText = (text) => "document.querySelector('main').innerText.includes(" + JSON.stringify(text) + ")";
+  const dashboardOrder = 'Array.from(document.querySelectorAll("main [id^=dashboard-]"), (block) => block.id).join(",")';
+  const editorPath = "/dashboard/personnaliser";
+  const editorTitle = "Personnaliser le tableau de bord";
   await browser.viewport(390, 900);
   await browser.navigate("/", "Tableau de bord");
   await browser.wait(hasText("30\u00a0min sur 14 jours au dernier import."), "durée récente issue de Steam dans le tableau de bord");
   await browser.wait(hasText("Date inconnue"), "absence de date exacte de dernière session");
+  assert.equal(await browser.evaluate(dashboardOrder), "dashboard-hero,dashboard-metrics,dashboard-recent,dashboard-top");
+  await browser.evaluate(`document.querySelector('main a[href="${editorPath}"]').click()`);
+  await browser.wait(hasText(editorTitle), "ouverture de la personnalisation du tableau de bord");
+  await browser.evaluate(`(() => {
+    const move = document.querySelector('button[aria-label="Monter Indicateurs de la bibliothèque"]');
+    move.focus();
+    move.click();
+    [...document.querySelectorAll('main label')].find((label) => label.textContent.includes('Activité Steam récente')).querySelector('input').click();
+  })()`);
+  await browser.wait('document.querySelector("main li:first-child label").textContent.includes("Indicateurs")', "déplacement d’un bloc vers le haut");
+  await browser.wait('document.activeElement.getAttribute("aria-label") === "Monter Indicateurs de la bibliothèque"', "focus conservé après déplacement");
+  await browser.submit("Enregistrer la disposition");
+  await browser.wait(dashboardOrder + ' === "dashboard-metrics,dashboard-hero,dashboard-top"', "ordre et visibilité personnalisés");
+  await browser.viewport(1440, 950);
+  await browser.navigate("/", "Tableau de bord");
+  assert.equal(await browser.evaluate(dashboardOrder), "dashboard-metrics,dashboard-hero,dashboard-top");
+  assert.equal(await browser.evaluate(`document.querySelector('#dashboard-hero a').getAttribute('href')`), "/library/" + gameId);
+  await browser.viewport(390, 900);
   await browser.navigate("/library", "Ma bibliothèque");
   await browser.wait(hasText("Orbite de test"), "jeu synchronisé dans la bibliothèque");
   assert.equal(await browser.evaluate("document.documentElement.scrollWidth === document.documentElement.clientWidth"), true);
@@ -218,6 +239,18 @@ try {
   const privateAnswer = await (await other.request(advisorPath)).text();
   assert.ok(privateAnswer.includes("Cette réponse est indisponible"));
   assert.equal(privateAnswer.includes("Jardin de test"), false);
+  const otherDashboard = await (await other.request(editorPath)).text();
+  assert.match(otherDashboard, /<li[^>]*>[\s\S]*?Mise en avant Steam/);
+  assert.ok(otherDashboard.indexOf("Mise en avant Steam") < otherDashboard.indexOf("Indicateurs de la bibliothèque"));
+  await browser.navigate(editorPath, editorTitle);
+  await browser.evaluate(`document.querySelector('button[aria-label="Descendre Indicateurs de la bibliothèque"]').click()`);
+  await browser.submit("Enregistrer la disposition");
+  await browser.wait(dashboardOrder + ' === "dashboard-hero,dashboard-metrics,dashboard-top"', "mise à jour d’une disposition déjà enregistrée");
+  await browser.navigate(editorPath, editorTitle);
+  await browser.evaluate(`[...document.querySelectorAll('main button')].find((button) => button.textContent === 'Rétablir la disposition par défaut').click()`);
+  await browser.submit("Enregistrer la disposition");
+  await browser.wait(dashboardOrder + ' === "dashboard-hero,dashboard-metrics,dashboard-recent,dashboard-top"', "rétablissement de la disposition par défaut");
+  assert.equal((await (await owner.request("/")).text()).includes('id="dashboard-recent"'), true);
   console.log("Isolation entre comptes, formulaires et graphiques validés dans Chrome à 390 et 1 440 px.");
 
   browser.close();

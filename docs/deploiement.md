@@ -43,6 +43,7 @@ npx --yes supabase@3.3.0 db push --remote
 
 ## Vérifier le parcours hébergé
 
+- Depuis le tableau de bord, ouvre **Personnaliser**, déplace un bloc et masque-en un autre. Enregistre, recharge la page puis rétablis la disposition par défaut.
 - Dans **Wishlist**, ajoute un jeu Steam absent de ta bibliothèque avec le lien de sa fiche, vérifie que son nom et son lien s’affichent, puis retire-le.
 - Ouvre la fiche d’un jeu possédé qui propose des succès et sélectionne **Charger mes succès**. Compare le résultat à Steam et vérifie le message affiché si la confidentialité du profil empêche la lecture.
 - Depuis l’URL HTTPS de préproduction, crée un compte, confirme l’adresse, puis déconnecte-toi et reconnecte-toi avec ton mot de passe. Vérifie aussi le parcours **Mot de passe oublié**. Associe un compte Steam de test et vérifie le nombre de jeux importés puis l’état affiché pour une bibliothèque inaccessible en modifiant la confidentialité du profil Steam.

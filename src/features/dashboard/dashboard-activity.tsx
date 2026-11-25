@@ -7,7 +7,7 @@ import { GameCover } from "@/features/library/game-cover";
 
 import { formatPlayDate, formatPlaytime, type ActivityGame, type LibrarySummary } from "./library-summary";
 
-function RecentlyPlayed({ games, recent, linked }: { games: ActivityGame[]; recent: boolean; linked: boolean }) {
+export function RecentlyPlayed({ games, recent, linked }: { games: ActivityGame[]; recent: boolean; linked: boolean }) {
   return (
     <section id="jeux-recents" tabIndex={-1} aria-labelledby="recently-played-title" className="min-w-0 scroll-mt-6 rounded-xl">
       <Card className="h-full p-5 sm:p-6">
@@ -103,16 +103,5 @@ export function MostPlayed({ summary, linked = true }: { summary: LibrarySummary
         )}
       </Card>
     </section>
-  );
-}
-
-export function DashboardActivity({ summary, games, recent, linked }: {
-  summary: LibrarySummary; games: ActivityGame[]; recent: boolean; linked: boolean;
-}) {
-  return (
-    <div className="grid gap-4 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-      <RecentlyPlayed games={games} recent={recent} linked={linked} />
-      <MostPlayed summary={summary} linked={linked} />
-    </div>
   );
 }

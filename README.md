@@ -87,6 +87,7 @@ Depuis **Wishlist**, colle le lien d’une fiche Steam ou saisis son AppID. Game
 
 ## Comprendre les statistiques
 
+- Depuis le tableau de bord, **Personnaliser** permet de choisir quels blocs afficher et de changer leur ordre. Enregistre la disposition pour la retrouver sur ton compte. Tu peux retrouver l’ordre et la visibilité d’origine avec **Rétablir la disposition par défaut**, puis enregistrer.
 - Le tableau de bord additionne les temps de jeu connus et indique combien de jeux disposent d’une mesure si la couverture est partielle.
 - Le bloc **Joués récemment** affiche les durées sur 14 jours au dernier import, avec la date de dernière session si elle est connue. En l’absence d’activité mesurée sur cette période, le tableau de bord affiche les dernières sessions connues lorsqu’elles sont disponibles.
 - **Analytics** affiche les huit dernières semaines ou les six derniers mois, période en cours comprise. Un écart entre deux relevés d’un même jeu est attribué à une période uniquement si les deux relevés y figurent. Les périodes sans mesure sont affichées comme indisponibles, les écarts entre périodes sont signalés séparément et les baisses de compteur sont écartées.
