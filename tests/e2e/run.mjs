@@ -167,6 +167,14 @@ try {
   await browser.navigate("/collections/" + collection.data.id, "Collection de test");
   await browser.wait(hasText("Orbite de test"), "jeu visible dans la collection");
 
+  await browser.navigate("/wishlist", "Wishlist");
+  await browser.submit("Ajouter à la wishlist", { steamApp: "https://store.steampowered.com/app/4000000103/" });
+  await browser.wait(hasText("Horizon convoité"), "jeu hors bibliothèque ajouté à la wishlist");
+  await browser.submit("Retirer de la wishlist");
+  await browser.wait(hasText("Ta wishlist est vide"), "jeu retiré de la wishlist");
+  await browser.submit("Ajouter à la wishlist", { steamApp: "4000000103" });
+  await browser.wait(hasText("Horizon convoité"), "jeu du catalogue ajouté de nouveau à la wishlist");
+
   await browser.viewport(1440, 950);
   await browser.navigate("/analytics", "Statistiques");
   await browser.wait("document.querySelectorAll('.recharts-wrapper').length >= 2", "dessin des graphiques et de la progression");
@@ -193,6 +201,8 @@ try {
   assert.ok((await (await other.request("/settings")).text()).includes(otherEmail));
   const privateGame = await (await other.request("/library/" + gameId)).text();
   assert.equal(privateGame.includes("Orbite de test"), false);
+  const privateWishlist = await (await other.request("/wishlist")).text();
+  assert.equal(privateWishlist.includes("Horizon convoité"), false);
   const privateAnswer = await (await other.request(advisorPath)).text();
   assert.ok(privateAnswer.includes("Cette réponse est indisponible"));
   assert.equal(privateAnswer.includes("Jardin de test"), false);

@@ -1,4 +1,5 @@
 import {
+  Bookmark,
   ChartNoAxesCombined,
   FolderClosed,
   LayoutDashboard,
@@ -31,6 +32,13 @@ export const sections = [
     title: "Collections",
     description: "Tu pourras créer des collections pour regrouper tes jeux comme tu le souhaites.",
     icon: FolderClosed,
+  },
+  {
+    slug: "wishlist",
+    label: "Wishlist",
+    title: "Wishlist",
+    description: "Retrouve les jeux Steam que tu aimerais acquérir.",
+    icon: Bookmark,
   },
   {
     slug: "analytics",

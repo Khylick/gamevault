@@ -12,6 +12,10 @@ globalThis.fetch = async (input, options) => {
   }
   if (url.origin === "https://api.steampowered.com") {
     assert.equal(new Headers(options.headers).get("x-webapi-key"), "fixture-only");
+    if (url.pathname === "/IStoreService/GetAppList/v1/") {
+      assert.equal(JSON.parse(url.searchParams.get("input_json")).last_appid, 4_000_000_102);
+      return Response.json({ response: { apps: [{ appid: 4_000_000_103, name: "Horizon convoité" }] } });
+    }
     if (url.pathname === "/IPlayerService/GetRecentlyPlayedGames/v1/") {
       return Response.json({ response: { total_count: 1, games: [{ appid: 4_000_000_101, playtime_2weeks: 30 }] } });
     }

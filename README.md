@@ -1,6 +1,6 @@
 # GameVault
 
-GameVault est un compagnon personnel pour les bibliothèques de jeux Steam. Après l’import, tu peux retrouver tes jeux, suivre ta progression et créer des collections.
+GameVault est un compagnon personnel pour les bibliothèques de jeux Steam. Après l’import, tu peux retrouver tes jeux, suivre ta progression et créer des collections. La wishlist te permet de garder une liste des jeux que tu aimerais acquérir.
 
 ## Démarrage local
 
@@ -52,7 +52,7 @@ Pour vérifier la reconstruction du schéma sur une base de test jetable, `npx -
 
 Les migrations SQL versionnées dans `supabase/migrations` sont la référence du schéma. Les tests sont dans `supabase/tests`.
 
-Les migrations des futurs modules suivront le même modèle. Les définitions de succès seront rattachées au catalogue, et les déblocages à la bibliothèque de chaque utilisateur. La wishlist reliera un profil à des jeux du catalogue, y compris des jeux qu’il ne possède pas.
+La wishlist relie chaque profil à des jeux du catalogue, y compris des jeux qu’il ne possède pas. Les définitions de succès pourront être rattachées au catalogue, et les déblocages à la bibliothèque de chaque utilisateur.
 
 ## Connexion Steam et première synchronisation
 
@@ -76,6 +76,10 @@ L’import utilise `IPlayerService/GetOwnedGames`. Si des temps récents manquen
 Après la synchronisation, ouvre **My Library** pour chercher un titre, filtrer les jeux ou passer de la grille à la liste. Les filtres figurent dans l’URL. Les genres et descriptions affichés proviennent du catalogue. Une illustration de remplacement s’affiche quand la pochette Steam est indisponible.
 
 Dans la fiche d’un jeu, tu peux l’ajouter aux favoris, compléter sa progression, l’évaluer et le placer dans plusieurs collections. Une fois le statut renseigné, le jeu apparaît dans **Backlog**, où tu peux changer son statut tout en conservant les autres champs. Dans **Collections**, tu peux créer, renommer ou supprimer une collection et retirer ses jeux.
+
+## Ajouter des jeux à la wishlist
+
+Depuis **Wishlist**, colle le lien d’une fiche Steam ou saisis son AppID. GameVault réutilise le jeu s’il figure déjà dans son catalogue. Sinon, il vérifie son AppID et récupère son nom auprès de Steam avec `STEAM_WEB_API_KEY`. La liste est privée et disponible dès que tu es connecté à GameVault. Si tu importes ensuite ce jeu dans ta bibliothèque, la wishlist affiche un lien vers sa fiche. [Catalogue Steam](https://partner.steamgames.com/doc/webapi/IStoreService)
 
 ## Comprendre les statistiques
 
