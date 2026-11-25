@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { MutationForm } from "@/features/library/mutation-form";
 import { enrichSteamCatalog } from "@/features/steam/catalog-actions";
+import { readSteamMetadataProgress } from "@/features/steam/catalog-progress";
 import { getSettingsNotice } from "@/features/steam/settings-notice";
 import { getSteamAccount, hasSteamApiKey } from "@/features/steam/steam-service";
 import { hasSupabaseServerKey } from "@/lib/supabase/admin";
@@ -44,6 +45,7 @@ async function SteamConnection({ supabase, userId }: { supabase: SettingsClient;
         .eq("user_id", userId)
         .eq("games.platform", "steam")
     : null;
+  const progress = serverReady && library?.count ? await readSteamMetadataProgress(supabase) : null;
 
   return (
     <Card className="p-5 sm:p-6">
@@ -78,8 +80,14 @@ async function SteamConnection({ supabase, userId }: { supabase: SettingsClient;
           )}
           {serverReady && Boolean(library?.count) && (
             <div className="mt-5 border-t border-border pt-5">
-              <p className="mb-3 text-sm text-muted-foreground">Complète les descriptions et les genres manquants par lots de 12 fiches.</p>
-              <MutationForm action={enrichSteamCatalog}>
+              <h3 className="text-sm font-semibold">Enrichissement du catalogue</h3>
+              {progress && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {progress.complete} {progress.complete === 1 ? "fiche prête" : "fiches prêtes"} · {progress.remaining} à compléter
+                  {progress.deferred > 0 && <> · {progress.deferred} en attente d’une prochaine tentative</>}
+                </p>
+              )}
+              <MutationForm action={enrichSteamCatalog} className="mt-3">
                 <SubmitButton label="Enrichir les fiches Steam" pendingLabel="Enrichissement…" secondary />
               </MutationForm>
             </div>

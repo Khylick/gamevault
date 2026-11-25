@@ -13,6 +13,10 @@ globalThis.fetch = async (input, options) => {
   if (url.origin === "https://store.steampowered.com" && url.pathname === "/api/appdetails") {
     const id = url.searchParams.get("appids");
     assert.equal(url.searchParams.get("l"), "french");
+    if (id === "4000000105") return new Response(null, { status: 429 });
+    if (id === "4000000104") return Response.json({ [id]: { success: true, data: {
+      steam_appid: Number(id), short_description: "Une fiche enrichie par le planificateur.", genres: [{ description: "Simulation" }],
+    } } });
     if (id === "4000000102") return Response.json({ [id]: { success: false } });
     assert.equal(id, "4000000101");
     return Response.json({ [id]: { success: true, data: {

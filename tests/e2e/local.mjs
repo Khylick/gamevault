@@ -11,6 +11,7 @@ import { fileURLToPath, URL } from "node:url";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const { fetch, Headers, FormData } = globalThis;
+export const localCronSecret = "gamevault-fixture-cron-secret";
 
 export async function waitFor(check, label) {
   for (let attempt = 0; attempt < 80; attempt += 1) {
@@ -120,6 +121,7 @@ export async function prepareLocalStack() {
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: config.PUBLISHABLE_KEY,
       SUPABASE_SECRET_KEY: config.SECRET_KEY,
       STEAM_WEB_API_KEY: "fixture-only",
+      CRON_SECRET: localCronSecret,
       OPENAI_API_KEY: "fixture-only",
       OPENAI_ADVISOR_MODEL: "gpt-4.1-mini",
     };

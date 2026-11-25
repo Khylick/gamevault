@@ -5,7 +5,7 @@ import { URL } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 
 import { openBrowser } from "./browser.mjs";
-import { createLocalSession, prepareLocalStack } from "./local.mjs";
+import { createLocalSession, localCronSecret, prepareLocalStack } from "./local.mjs";
 
 const steamId = "76561197960265729";
 const ownerEmail = "owner-e2e@example.com";
@@ -165,6 +165,7 @@ try {
   await browser.navigate("/settings", "Paramètres");
   await browser.submit("Enrichir les fiches Steam");
   await browser.wait(hasText("1 fiche enrichie."), "enrichissement d’un jeu déjà importé");
+  await browser.wait(hasText("1 fiche prête · 1 à compléter"), "suivi de la progression de l’enrichissement");
   await browser.submit("Enrichir les fiches Steam");
   await browser.wait(hasText("Aucune fiche Steam à enrichir pour le moment."), "évite de refaire le même lot");
   await browser.navigate("/library", "Ma bibliothèque");
@@ -263,6 +264,25 @@ try {
 
   browser.close();
   browser = undefined;
+  const cronUrl = stack.origin + "/api/cron/steam-metadata";
+  assert.equal((await fetch(cronUrl)).status, 401);
+  const scheduledGames = ["4000000104", "4000000105"].map((external_id) => ({
+    id: randomUUID(), platform: "steam", external_id, name: "Jeu pour le planificateur",
+  }));
+  assert.equal((await admin.from("games").insert(scheduledGames)).error, null);
+  const scheduledIds = scheduledGames.map(({ id }) => id);
+  assert.equal((await admin.from("user_games").insert(scheduledIds.map((game_id) => ({ user_id: userId, game_id })))).error, null);
+  const headers = { authorization: "Bearer " + localCronSecret };
+  const cron = await fetch(cronUrl, { headers });
+  assert.equal(cron.status, 200);
+  assert.deepEqual(await cron.json(), { status: "retry-pending", reserved: 2, enriched: 1 });
+  assert.deepEqual(await (await fetch(cronUrl, { headers })).json(), { status: "skipped" });
+  const scheduledGame = await admin.from("games").select("description,genres").eq("id", scheduledIds[0]).single();
+  assert.equal(scheduledGame.error, null);
+  assert.deepEqual(scheduledGame.data, { description: "Une fiche enrichie par le planificateur.", genres: ["Simulation"] });
+  const settingsAfterCron = await (await owner.request("/settings")).text();
+  assert.match(settingsAfterCron.replace(/<!--.*?-->/g, ""), /2 fiches prêtes[\s\S]*?2 à compléter/);
+  assert.equal((await admin.from("user_games").delete().eq("user_id", userId).in("game_id", scheduledIds)).error, null);
   await measureLargeLibrary(admin, owner, userId);
 } finally {
   browser?.close();

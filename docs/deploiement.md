@@ -31,6 +31,7 @@ npm run test:e2e
 | `STEAM_WEB_API_KEY` | Clé Steam Web API utilisée côté serveur |
 | `OPENAI_API_KEY` | Clé du projet OpenAI côté serveur |
 | `OPENAI_ADVISOR_MODEL` | Modèle facultatif, `gpt-4.1-mini` par défaut |
+| `CRON_SECRET` | Secret requis en **Production** pour autoriser la tâche d’enrichissement automatique |
 
 4. Applique les migrations au projet ciblé. Compare la ligne `Target:` et la liste des migrations avec la référence Supabase attendue avant de confirmer. [Migrations Supabase](https://supabase.com/docs/guides/deployment/database-migrations)
 
@@ -58,5 +59,11 @@ npx --yes supabase@3.3.0 db push --remote
 2. Configure les variables **Production** de Vercel et les URL Supabase Auth de production. Vérifie la cible, puis applique les migrations en suivant la procédure ci-dessus.
 3. Publie la révision validée et rejoue sur l’URL finale la connexion par mot de passe, la liaison Steam, la synchronisation et une question au Game Advisor.
 4. En cas de régression applicative, rétablis le déploiement Vercel précédent. Évalue les migrations déjà appliquées avant toute restauration de données. [Retour à un déploiement Vercel précédent](https://vercel.com/docs/deployments/instant-rollback)
+
+## Activer l’enrichissement automatique
+
+Génère un secret aléatoire avec `openssl rand -hex 32` et enregistre-le sous `CRON_SECRET` dans les variables **Production** de Vercel. Applique les migrations Supabase, puis déploie la version qui contient `vercel.json`. Vercel transmet le secret dans l’en-tête `Authorization` et appelle la tâche de production quotidiennement pendant le créneau de 03 h UTC. [Gestion des tâches Vercel](https://vercel.com/docs/schedules/cron-jobs/manage-cron-jobs)
+
+Chaque exécution peut traiter jusqu’à 48 jeux, répartis en lots de 12. Si Steam limite les appels, le passage s’arrête et les fiches réservées redeviennent éligibles après leur délai de reprise. Dans **Vercel → Cron Jobs**, vérifie que `/api/cron/steam-metadata` est actif. Consulte les compteurs dans **Paramètres → Compte Steam** après un passage.
 
 Les compteurs serveur autorisent jusqu’à 10 demandes de synchronisation Steam et 30 questions Game Advisor par compte et par heure UTC. La limite s’applique avant l’appel externe. Une réponse de limitation invite à réessayer à l’heure suivante.

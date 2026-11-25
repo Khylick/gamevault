@@ -3,7 +3,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path = public, extensions;
 
-SELECT plan(10);
+SELECT plan(18);
 
 INSERT INTO auth.users (id, email) VALUES
     ('00000000-0000-4000-8000-0000000000a1', 'ada@example.test'),
@@ -54,11 +54,24 @@ SELECT is_empty(
     $$SELECT * FROM public.reserve_steam_metadata_batch('00000000-0000-4000-8000-0000000000b2')$$,
     'Une absence côté Steam est réévaluée après le délai de reprise'
 );
+SELECT ok(public.claim_steam_metadata_schedule(), 'Le planificateur peut réserver une exécution');
+SELECT is(public.claim_steam_metadata_schedule(), FALSE, 'Un appel pendant la même heure est ignoré');
+SELECT is_empty($$SELECT * FROM public.reserve_steam_metadata_batch(NULL)$$, 'Le traitement automatique respecte le délai des fiches');
+UPDATE public.games SET steam_metadata_retry_at = statement_timestamp() - INTERVAL '1 minute' WHERE external_id = '103';
+SELECT results_eq($$SELECT external_id FROM public.reserve_steam_metadata_batch(NULL)$$, ARRAY['103'::TEXT],
+    'Le traitement automatique reprend le lot dès que le délai a expiré');
 
 RESET ROLE;
 SET LOCAL ROLE authenticated;
 SELECT ok(NOT has_function_privilege(current_user, 'public.reserve_steam_metadata_batch(uuid)', 'EXECUTE'),
     'La réservation reste réservée au serveur');
+SELECT ok(NOT has_function_privilege(current_user, 'public.claim_steam_metadata_schedule()', 'EXECUTE'),
+    'Un compte authentifié ne peut pas lancer une exécution réservée au serveur');
+SET LOCAL request.jwt.claims = '{"sub":"00000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+SELECT is((SELECT complete FROM public.steam_metadata_progress()), 2::BIGINT, 'Le compteur inclut uniquement les fiches complètes du compte');
+SELECT is((SELECT remaining FROM public.steam_metadata_progress()), 0::BIGINT, 'Les fiches des autres comptes ne sont pas comptées');
+SET LOCAL request.jwt.claims = '{"sub":"00000000-0000-4000-8000-0000000000b2","role":"authenticated"}';
+SELECT is((SELECT deferred FROM public.steam_metadata_progress()), 1::BIGINT, 'Une fiche en attente est visible dans le suivi du compte');
 RESET ROLE;
 
 SELECT * FROM finish();

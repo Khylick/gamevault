@@ -77,7 +77,7 @@ Après la synchronisation, ouvre **My Library** pour chercher un titre, filtrer 
 
 Dans la fiche d’un jeu, tu peux l’ajouter aux favoris, compléter sa progression, l’évaluer et le placer dans plusieurs collections. Une fois le statut renseigné, le jeu apparaît dans **Backlog**, où tu peux changer son statut tout en conservant les autres champs. Dans **Collections**, tu peux créer, renommer ou supprimer une collection et retirer ses jeux.
 
-Dans **Paramètres → Compte Steam**, utilise **Enrichir les fiches Steam** pour compléter les descriptions courtes et les genres manquants sur les jeux déjà importés. Chaque passage traite jusqu’à 12 fiches depuis le magasin Steam. Les données reçues alimentent aussi les filtres, les statistiques par genre et les recommandations de Game Advisor.
+Dans **Paramètres → Compte Steam**, le compteur indique les fiches prêtes et celles qui restent à compléter. La tâche Vercel traite en arrière-plan les jeux Steam déjà importés. **Enrichir les fiches Steam** lance aussi un lot manuel de 12 fiches maximum. Les données du magasin Steam alimentent les filtres, les statistiques par genre et les recommandations de Game Advisor. [Configuration de la tâche planifiée](docs/deploiement.md#activer-lenrichissement-automatique)
 
 ## Consulter les succès Steam
 
