@@ -31,7 +31,7 @@ npm run test:e2e
 | `STEAM_WEB_API_KEY` | Clé Steam Web API utilisée côté serveur |
 | `OPENAI_API_KEY` | Clé du projet OpenAI côté serveur |
 | `OPENAI_ADVISOR_MODEL` | Modèle facultatif, `gpt-4.1-mini` par défaut |
-| `CRON_SECRET` | Secret requis en **Production** pour autoriser la tâche d’enrichissement automatique |
+| `CRON_SECRET` | Secret requis en **Production** pour autoriser les tâches Steam |
 
 4. Applique les migrations au projet ciblé. Compare la ligne `Target:` et la liste des migrations avec la référence Supabase attendue avant de confirmer. [Migrations Supabase](https://supabase.com/docs/guides/deployment/database-migrations)
 
@@ -44,6 +44,7 @@ npx --yes supabase@3.3.0 db push --remote
 
 ## Vérifier le parcours hébergé
 
+- Après avoir associé un compte Steam de test, active la synchronisation automatique dans **Paramètres** et vérifie le résultat du premier passage et les changements de bibliothèque.
 - Dans **Game Advisor**, pose une question sur les jeux à reprendre, puis une sur les jeux proches de tes meilleures notes. Vérifie que les statuts, les genres et les notes cités correspondent à ta bibliothèque.
 - Note un jeu dont l’année de sortie Steam est connue et vérifie son groupe dans **Classements**. Renseigne une autre année sur sa fiche, puis vérifie qu’il rejoint le groupe correspondant.
 - Depuis **Paramètres**, lance **Enrichir les fiches Steam** sur une bibliothèque déjà importée. Vérifie la description dans une fiche et la présence de ses genres dans les filtres de la bibliothèque.
@@ -62,10 +63,13 @@ npx --yes supabase@3.3.0 db push --remote
 3. Publie la révision validée et rejoue sur l’URL finale la connexion par mot de passe, la liaison Steam, la synchronisation et une question au Game Advisor.
 4. En cas de régression applicative, rétablis le déploiement Vercel précédent. Évalue les migrations déjà appliquées avant toute restauration de données. [Retour à un déploiement Vercel précédent](https://vercel.com/docs/deployments/instant-rollback)
 
-## Activer l’enrichissement automatique
+## Activer les tâches Steam
 
-Génère un secret aléatoire avec `openssl rand -hex 32` et enregistre-le sous `CRON_SECRET` dans les variables **Production** de Vercel. Applique les migrations Supabase, puis déploie la version qui contient `vercel.json`. Vercel transmet le secret dans l’en-tête `Authorization` et appelle la tâche de production quotidiennement pendant le créneau de 03 h UTC. [Gestion des tâches Vercel](https://vercel.com/docs/schedules/cron-jobs/manage-cron-jobs)
+Génère un secret aléatoire avec `openssl rand -hex 32` et enregistre-le sous `CRON_SECRET` dans les variables **Production** de Vercel. Si ce secret existe déjà pour l’enrichissement du catalogue, les deux tâches utilisent la même valeur. Applique les migrations Supabase, puis déploie la version qui contient `vercel.json`. Vercel transmet le secret dans l’en-tête `Authorization`. [Gestion des tâches Vercel](https://vercel.com/docs/schedules/cron-jobs/manage-cron-jobs)
 
-Chaque exécution peut traiter jusqu’à 48 jeux, répartis en lots de 12. Si Steam limite les appels, le passage s’arrête et les fiches réservées redeviennent éligibles après leur délai de reprise. Dans **Vercel → Cron Jobs**, vérifie que `/api/cron/steam-metadata` est actif. Consulte les compteurs dans **Paramètres → Compte Steam** après un passage.
+- `/api/cron/steam-sync` synchronise les comptes ayant activé l’option pendant le créneau quotidien de 02 h UTC. Le passage traite jusqu’à 12 comptes, par lots de trois, en commençant par ceux qui attendent depuis le plus longtemps. Consulte le résultat dans **Paramètres → Compte Steam**.
+- `/api/cron/steam-metadata` enrichit jusqu’à 48 fiches, réparties en lots de 12, pendant le créneau quotidien de 03 h UTC. Si Steam limite les appels, le passage s’arrête et les fiches réservées redeviennent éligibles après leur délai de reprise.
+
+Vérifie l’état de ces deux routes dans **Vercel → Cron Jobs**.
 
 Les compteurs serveur autorisent jusqu’à 10 demandes de synchronisation Steam et 30 questions Game Advisor par compte et par heure UTC. La limite s’applique avant l’appel externe. Une réponse de limitation invite à réessayer à l’heure suivante.

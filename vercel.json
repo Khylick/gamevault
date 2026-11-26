@@ -1,5 +1,6 @@
 {
   "crons": [
+    { "path": "/api/cron/steam-sync", "schedule": "0 2 * * *" },
     { "path": "/api/cron/steam-metadata", "schedule": "0 3 * * *" }
   ]
 }

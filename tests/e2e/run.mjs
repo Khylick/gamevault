@@ -315,6 +315,33 @@ try {
   assert.match(settingsAfterCron.replace(/<!--.*?-->/g, ""), /2 fiches prêtes[\s\S]*?2 à compléter/);
   assert.equal((await admin.from("user_games").delete().eq("user_id", userId).in("game_id", scheduledIds)).error, null);
   await measureLargeLibrary(admin, owner, userId);
+
+  const autoSyncUrl = stack.origin + "/api/cron/steam-sync";
+  assert.equal((await fetch(autoSyncUrl)).status, 401);
+  assert.deepEqual(await (await fetch(autoSyncUrl, { headers })).json(), { status: "completed", attempted: 0, succeeded: 0 });
+  const enabled = await owner.submitSettings("Activer la synchronisation automatique", { enabled: "true" });
+  assert.match(enabled.headers.get("location") ?? "", /notification=auto-sync-enabled/);
+  assert.deepEqual(await (await fetch(autoSyncUrl, { headers })).json(), { status: "completed", attempted: 1, succeeded: 1 });
+  assert.deepEqual(await (await fetch(autoSyncUrl, { headers })).json(), { status: "completed", attempted: 0, succeeded: 0 });
+  assert.ok((await (await owner.request("/library?q=import%C3%A9")).text()).includes("Jeu importé automatiquement"));
+  const afterAuto = await admin.from("user_games").select("playtime_minutes").eq("user_id", userId).eq("game_id", gameId).single();
+  assert.equal(afterAuto.error, null);
+  assert.equal(afterAuto.data.playtime_minutes, 195);
+  const settingsAuto = await (await owner.request("/settings")).text();
+  assert.ok(settingsAuto.includes("Dernier passage automatique"));
+  assert.ok(settingsAuto.includes("Ta bibliothèque Steam a été synchronisée."));
+
+  const previousDay = new Date(Date.now() - 86_400_000).toISOString();
+  assert.equal((await admin.from("steam_accounts").update({ auto_sync_attempted_at: previousDay }).eq("user_id", userId)).error, null);
+  assert.deepEqual(await (await fetch(autoSyncUrl, { headers })).json(), { status: "completed", attempted: 1, succeeded: 0 });
+  const privateSteam = await admin.from("steam_accounts").select("auto_sync_result").eq("user_id", userId).single();
+  assert.equal(privateSteam.error, null);
+  assert.equal(privateSteam.data.auto_sync_result, "library-inaccessible");
+  assert.ok((await (await owner.request("/library?q=import%C3%A9")).text()).includes("Jeu importé automatiquement"));
+  const disabled = await owner.submitSettings("Désactiver la synchronisation automatique", { enabled: "false" });
+  assert.match(disabled.headers.get("location") ?? "", /notification=auto-sync-disabled/);
+  assert.equal((await admin.from("steam_accounts").update({ auto_sync_attempted_at: previousDay }).eq("user_id", userId)).error, null);
+  assert.deepEqual(await (await fetch(autoSyncUrl, { headers })).json(), { status: "completed", attempted: 0, succeeded: 0 });
 } finally {
   browser?.close();
   await stack.stop();

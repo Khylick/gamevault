@@ -32,6 +32,8 @@ export const settingsNotices = {
   "steam-synced": { message: "Ta bibliothèque Steam a été synchronisée.", success: true },
   "steam-empty": { message: "Steam a confirmé que la bibliothèque accessible est vide. Les jeux déjà importés sont conservés.", success: true },
   "steam-outdated": { message: "Une synchronisation plus récente est déjà enregistrée.", success: true },
+  "auto-sync-enabled": { message: "La synchronisation automatique Steam est activée.", success: true },
+  "auto-sync-disabled": { message: "La synchronisation automatique Steam est désactivée.", success: true },
 } satisfies Record<string, { message: string; success?: boolean }>;
 
 export type SettingsNotice = keyof typeof settingsNotices;

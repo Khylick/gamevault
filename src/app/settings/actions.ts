@@ -6,7 +6,7 @@ import { z } from "zod";
 
 import { buildSteamSignInUrl, getSteamStateCookieOptions, steamStateCookie, steamStateMaxAge } from "@/features/steam/openid";
 import { settingsLocation } from "@/features/steam/settings-notice";
-import { getSteamAccount, issueSteamChallenge, synchronizeSteamLibrary } from "@/features/steam/steam-service";
+import { getSteamAccount, hasSteamApiKey, issueSteamChallenge, synchronizeSteamLibrary } from "@/features/steam/steam-service";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAppOrigin } from "@/lib/supabase/config";
 import { createSessionClient } from "@/lib/supabase/session";
@@ -141,4 +141,19 @@ export async function syncSteamLibrary() {
 
   const result = await synchronizeSteamLibrary(admin, userId, account.data.steam_id);
   redirect(settingsLocation(result));
+}
+
+export async function setSteamAutoSync(formData: FormData) {
+  const { supabase } = await requireUser();
+  const enabled = z.enum(["true", "false"]).safeParse(formData.get("enabled"));
+  if (!enabled.success) redirect(settingsLocation("service-error"));
+  const active = enabled.data === "true";
+  if (active && (!hasSteamApiKey() || !process.env.CRON_SECRET?.trim() || !createAdminClient())) {
+    redirect(settingsLocation("configuration"));
+  }
+
+  const { data, error } = await supabase.rpc("set_steam_auto_sync", { p_enabled: active });
+  if (error) redirect(settingsLocation("service-error"));
+  if (data !== true) redirect(settingsLocation("steam-not-linked"));
+  redirect(settingsLocation(active ? "auto-sync-enabled" : "auto-sync-disabled"));
 }

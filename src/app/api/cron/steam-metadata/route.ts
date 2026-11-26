@@ -1,18 +1,13 @@
-import { timingSafeEqual } from "node:crypto";
-
 import { revalidatePath } from "next/cache";
 
 import { processSteamMetadataBatch } from "@/features/steam/catalog-batch";
+import { cronHeaders as headers, isAuthorizedCronRequest } from "@/lib/cron";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const maxDuration = 60;
 
 export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET?.trim();
-  const provided = Buffer.from(request.headers.get("authorization") ?? "");
-  const expected = Buffer.from("Bearer " + secret);
-  const headers = { "Cache-Control": "no-store" };
-  if (!secret || provided.length !== expected.length || !timingSafeEqual(provided, expected)) {
+  if (!isAuthorizedCronRequest(request)) {
     return Response.json({ status: "unauthorized" }, { status: 401, headers });
   }
 

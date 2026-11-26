@@ -15,7 +15,7 @@ import { hasSupabaseServerKey } from "@/lib/supabase/admin";
 import { getAppOrigin } from "@/lib/supabase/config";
 import { createSessionClient } from "@/lib/supabase/session";
 
-import { signOut, startSteamLink, syncSteamLibrary } from "./actions";
+import { setSteamAutoSync, signOut, startSteamLink, syncSteamLibrary } from "./actions";
 import { PasswordForm, SignedOutForm } from "./auth-forms";
 
 export const metadata: Metadata = { title: "Paramètres" };
@@ -28,6 +28,38 @@ const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
 
 type SettingsClient = NonNullable<Awaited<ReturnType<typeof createSessionClient>>>;
 
+type AutoSync = { auto_sync_enabled: boolean; auto_sync_attempted_at: string | null; auto_sync_result: string | null };
+
+function SteamAutoSync({ settings, ready }: { settings: AutoSync; ready: boolean }) {
+  const { auto_sync_enabled: active, auto_sync_attempted_at: lastAttempt, auto_sync_result: result } = settings;
+  const message = result === "running"
+    ? "Résultat du passage en attente."
+    : result === "cancelled" ? "Passage annulé." : getSettingsNotice(result ?? undefined)?.message;
+
+  return (
+    <div className="mt-5 border-t border-border pt-5">
+      <h3 className="text-sm font-semibold">Synchronisation automatique</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {!ready ? "Configuration du planificateur requise" : active ? "Activée · Passage quotidien" : "Désactivée"}
+      </p>
+      {lastAttempt && (
+        <dl className="mt-3 text-sm">
+          <dt className="text-muted-foreground">Dernier passage automatique</dt>
+          <dd className="mt-1"><time dateTime={lastAttempt}>{dateFormatter.format(new Date(lastAttempt))} UTC</time></dd>
+          {message && <dd className="mt-1">{message}</dd>}
+        </dl>
+      )}
+      {(ready || active) && (
+        <form action={setSteamAutoSync} className="mt-3">
+          <input type="hidden" name="enabled" value={String(!active)} />
+          <SubmitButton label={active ? "Désactiver la synchronisation automatique" : "Activer la synchronisation automatique"}
+            pendingLabel="Enregistrement…" secondary />
+        </form>
+      )}
+    </div>
+  );
+}
+
 async function SteamConnection({ supabase, userId }: { supabase: SettingsClient; userId: string }) {
   const account = await getSteamAccount(supabase, userId);
   if (account.error) {
@@ -38,7 +70,10 @@ async function SteamConnection({ supabase, userId }: { supabase: SettingsClient;
 
   const serverReady = hasSupabaseServerKey();
   const apiReady = hasSteamApiKey();
+  const autoSyncReady = serverReady && apiReady && Boolean(process.env.CRON_SECRET?.trim());
   const connection = account.data;
+  const autoSync = connection ? await supabase.from("steam_accounts")
+    .select("auto_sync_enabled,auto_sync_attempted_at,auto_sync_result").eq("user_id", userId).maybeSingle<AutoSync>() : null;
   const library = connection?.last_synced_at
     ? await supabase.from("user_games")
         .select("game_id,games!inner(platform)", { count: "exact", head: true })
@@ -78,6 +113,7 @@ async function SteamConnection({ supabase, userId }: { supabase: SettingsClient;
               <SubmitButton label="Synchroniser la bibliothèque" pendingLabel="Synchronisation en cours…" />
             </form>
           )}
+          {autoSync?.data && <SteamAutoSync settings={autoSync.data} ready={autoSyncReady} />}
           {serverReady && Boolean(library?.count) && (
             <div className="mt-5 border-t border-border pt-5">
               <h3 className="text-sm font-semibold">Enrichissement du catalogue</h3>

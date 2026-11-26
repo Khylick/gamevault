@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { URL } from "node:url";
 
 const { fetch, Request, Response, Headers } = globalThis;
+let libraryRequests = 0;
 
 globalThis.fetch = async (input, options) => {
   const url = new URL(input instanceof Request ? input.url : input);
@@ -46,10 +47,17 @@ globalThis.fetch = async (input, options) => {
       return Response.json({ response: { total_count: 1, games: [{ appid: 4_000_000_101, playtime_2weeks: 30 }] } });
     }
     assert.equal(url.pathname, "/IPlayerService/GetOwnedGames/v1/");
-    return Response.json({ response: { game_count: 2, games: [
+    libraryRequests += 1;
+    if (libraryRequests === 3) return Response.json({ response: {} });
+    const owned = [
       { appid: 4_000_000_101, name: "Orbite de test", playtime_forever: 180 },
       { appid: 4_000_000_102, name: "Jardin de test", playtime_forever: 0 },
-    ] } });
+    ];
+    if (libraryRequests >= 2) {
+      owned[0].playtime_forever = 195;
+      owned.push({ appid: 4_000_000_106, name: "Jeu importé automatiquement", playtime_forever: 15 });
+    }
+    return Response.json({ response: { game_count: owned.length, games: owned } });
   }
   if (url.href === "https://api.openai.com/v1/responses") {
     const body = JSON.parse(options.body);

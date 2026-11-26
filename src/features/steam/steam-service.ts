@@ -50,7 +50,7 @@ export function hasSteamApiKey() {
   return Boolean(process.env.STEAM_WEB_API_KEY?.trim());
 }
 
-export async function synchronizeSteamLibrary(admin: AdminClient, userId: string, steamId: string) {
+export async function synchronizeSteamLibrary(admin: AdminClient, userId: string, steamId: string, attemptedAt?: string) {
   const key = process.env.STEAM_WEB_API_KEY?.trim();
   if (!key) return "steam-api-key";
   const quota = await claimExternalRequest(admin, userId, "steam_sync");
@@ -66,6 +66,7 @@ export async function synchronizeSteamLibrary(admin: AdminClient, userId: string
     p_steam_id: steamId,
     p_observed_at: observedAt,
     p_games: library.games,
+    ...(attemptedAt ? { p_auto_sync_attempted_at: attemptedAt } : {}),
   });
 
   if (error) return "service-error";

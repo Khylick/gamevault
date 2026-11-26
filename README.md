@@ -69,6 +69,8 @@ Dans **Settings**, crée un compte avec ton adresse e-mail et un mot de passe, p
 
 Une fois connecté à GameVault, utilise **Connect with Steam**. Après validation OpenID, GameVault enregistre le SteamID64 et tente un premier import. Le bouton de synchronisation permet de relancer l’opération.
 
+Dans **Paramètres → Compte Steam**, tu peux aussi activer la synchronisation automatique quotidienne et consulter le résultat du dernier passage. Le planificateur répartit les comptes activés en petits lots. Une bibliothèque inaccessible ou une erreur Steam laisse en place les données du dernier import réussi. [Configuration des tâches planifiées](docs/deploiement.md#activer-les-tâches-steam)
+
 L’import utilise `IPlayerService/GetOwnedGames`. Si des temps récents manquent, GameVault interroge aussi `IPlayerService/GetRecentlyPlayedGames` pour compléter les jeux importés. La visibilité des détails de jeu sur Steam détermine les données accessibles. GameVault conserve la bibliothèque déjà importée quand Steam refuse l’accès ou renvoie une liste vide ou incomplète. L’import peut aboutir si seule la requête d’activité échoue. Les jeux sans titre peuvent être identifiés par leur AppID Steam. [API Steamworks](https://partner.steamgames.com/doc/webapi/IPlayerService)
 
 ## Gérer ta bibliothèque
@@ -77,7 +79,7 @@ Après la synchronisation, ouvre **My Library** pour chercher un titre, filtrer 
 
 Dans la fiche d’un jeu, tu peux l’ajouter aux favoris, compléter sa progression, l’évaluer et le placer dans plusieurs collections. Une fois le statut renseigné, le jeu apparaît dans **Backlog**, où tu peux changer son statut tout en conservant les autres champs. Dans **Collections**, tu peux créer, renommer ou supprimer une collection et retirer ses jeux.
 
-Dans **Paramètres → Compte Steam**, le compteur indique les fiches prêtes et celles qui restent à compléter. La tâche Vercel traite en arrière-plan les jeux Steam déjà importés. **Enrichir les fiches Steam** lance aussi un lot manuel de 12 fiches maximum. Les données du magasin Steam alimentent les filtres, les statistiques par genre et les recommandations de Game Advisor. [Configuration de la tâche planifiée](docs/deploiement.md#activer-lenrichissement-automatique)
+Dans **Paramètres → Compte Steam**, le compteur indique les fiches prêtes et celles qui restent à compléter. La tâche Vercel traite en arrière-plan les jeux Steam déjà importés. **Enrichir les fiches Steam** lance aussi un lot manuel de 12 fiches maximum. Les données du magasin Steam alimentent les filtres, les statistiques par genre et les recommandations de Game Advisor. [Configuration de la tâche planifiée](docs/deploiement.md#activer-les-tâches-steam)
 
 ## Consulter les succès Steam
 
