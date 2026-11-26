@@ -57,10 +57,13 @@ globalThis.fetch = async (input, options) => {
     assert.equal(body.store, false);
     assert.deepEqual(body.tool_choice, { type: "function", name: "query_owned_library" });
     assert.doesNotMatch(JSON.stringify(body), /Orbite de test|Jardin de test|Note de test/);
+    const intent = body.input.includes("devrais-je reprendre") ? "resume"
+      : body.input.includes("le mieux notés") ? "similar_rated" : "unplayed";
+    assert.ok(body.tools[0].parameters.properties.intent.enum.includes(intent));
     return Response.json({ status: "completed", output: [{
       type: "function_call",
       name: "query_owned_library",
-      arguments: JSON.stringify({ intent: "unplayed", durationText: null }),
+      arguments: JSON.stringify({ intent, durationText: null }),
     }] });
   }
   return fetch(input, options);

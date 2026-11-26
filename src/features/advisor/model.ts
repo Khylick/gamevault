@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const advisorIntent = z.enum([
-  "session", "relaxing", "unplayed", "abandoned", "completion", "similar", "unsupported",
+  "session", "relaxing", "unplayed", "abandoned", "completion", "similar", "resume", "similar_rated", "unsupported",
 ]);
 export type AdvisorIntent = z.infer<typeof advisorIntent>;
 
@@ -14,6 +14,7 @@ export const interpretationSchema = z.object({
 export type Interpretation = z.infer<typeof interpretationSchema>;
 
 const number = z.number().int().nonnegative();
+const rating = z.number().int().min(1).max(10);
 export const advisorMatchesSchema = z.object({
   total: number,
   games: z.object({
@@ -23,6 +24,9 @@ export const advisorMatchesSchema = z.object({
     favorite: z.boolean(),
     status: z.string().nullable(),
     matchedGenres: z.string().array(),
+    rating: rating.nullable().optional(),
+    favoriteGenreMatch: z.boolean().default(false),
+    ratedReferences: z.object({ title: z.string(), rating }).array().max(3).default([]),
   }).array().max(6),
 });
 
@@ -40,6 +44,8 @@ export const advisorExamples = [
   "Quels jeux ai-je abandonnés après moins de 5 heures ?",
   "Quel jeu pourrais-je terminer en moins de 15 heures ?",
   "Propose-moi un jeu similaire à mes favoris.",
+  "Quel jeu de mon backlog devrais-je reprendre ?",
+  "Trouve-moi un jeu proche de ceux que j’ai le mieux notés.",
 ];
 
 const minutesOnly = /^(\d{1,5})\s*(?:minutes?|min)$/iu;

@@ -44,6 +44,7 @@ npx --yes supabase@3.3.0 db push --remote
 
 ## Vérifier le parcours hébergé
 
+- Dans **Game Advisor**, pose une question sur les jeux à reprendre, puis une sur les jeux proches de tes meilleures notes. Vérifie que les statuts, les genres et les notes cités correspondent à ta bibliothèque.
 - Note un jeu dont l’année de sortie Steam est connue et vérifie son groupe dans **Classements**. Renseigne une autre année sur sa fiche, puis vérifie qu’il rejoint le groupe correspondant.
 - Depuis **Paramètres**, lance **Enrichir les fiches Steam** sur une bibliothèque déjà importée. Vérifie la description dans une fiche et la présence de ses genres dans les filtres de la bibliothèque.
 - Depuis le tableau de bord, ouvre **Personnaliser**, déplace un bloc et masque-en un autre. Enregistre, recharge la page puis rétablis la disposition par défaut.

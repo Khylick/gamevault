@@ -3,7 +3,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path = public, extensions;
 
-SELECT plan(18);
+SELECT plan(26);
 
 INSERT INTO auth.users (id, email) VALUES
     ('00000000-0000-4000-8000-0000000000a1', 'ada@example.test'),
@@ -55,6 +55,31 @@ SELECT is(public.advisor_library_matches('similar')->>'total', '1', 'La similari
 SELECT is(public.advisor_library_matches('similar')->'games'->0->'matchedGenres', '["simulation"]'::JSONB, 'La similarité expose le genre commun');
 SELECT is(public.advisor_library_matches('relaxing')->>'total', '2', 'Les pistes calmes reposent sur des genres réels');
 SELECT is(public.advisor_library_matches('completion')->>'total', '0', 'Une durée de complétion est hors des données interrogeables');
+
+RESET ROLE;
+UPDATE public.games SET genres = ARRAY['Simulation', 'Puzzle', 'simulation'] WHERE external_id = '103';
+UPDATE public.games SET genres = ARRAY['Simulation'] WHERE external_id = '104';
+INSERT INTO public.user_reviews (user_id, game_id, rating) VALUES
+    ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000101', 8),
+    ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000103', 9),
+    ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000104', 9),
+    ('00000000-0000-4000-8000-0000000000b2', '00000000-0000-4000-8000-000000000108', 10);
+INSERT INTO public.backlog_items (user_id, game_id, status) VALUES
+    ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000101', 'playing'),
+    ('00000000-0000-4000-8000-0000000000a1', '00000000-0000-4000-8000-000000000102', 'paused');
+SET LOCAL ROLE authenticated;
+
+SELECT is(public.advisor_library_matches('resume')->>'total', '2', 'La reprise se limite aux jeux en cours ou en pause');
+SELECT is(public.advisor_library_matches('resume')->'games'->0->>'title', 'Éclipse', 'Les genres en commun départagent les jeux à reprendre');
+SELECT is(public.advisor_library_matches('resume')->'games'->0->>'status', 'paused', 'La raison conserve le statut exact');
+SELECT is(public.advisor_library_matches('resume')->'games'->0->>'favoriteGenreMatch', 'true', 'Un genre commun avec un favori est détecté');
+SELECT is(public.advisor_library_matches('resume')->'games'->1->>'favoriteGenreMatch', 'false', 'Un jeu ne se rapproche pas de lui-même');
+SELECT is(public.advisor_library_matches('similar_rated')->>'total', '2', 'Les recommandations excluent les titres qui servent de référence');
+SELECT is(public.advisor_library_matches('similar_rated')->'games'->0->'ratedReferences',
+    '[{"title":"Balise","rating":9},{"title":"Dérive","rating":9}]'::JSONB,
+    'Les références sont les jeux de la meilleure note du compte, sans doublons');
+SELECT is(public.advisor_library_matches('similar_rated')->'games'->0->'matchedGenres', '["Puzzle","simulation"]'::JSONB,
+    'Les genres reflètent les données partagées avec ces références');
 
 SELECT is((SELECT question FROM public.ai_conversations), 'Question Ada', 'L’historique d’Ada exclut celui de Bob');
 SELECT throws_ok(

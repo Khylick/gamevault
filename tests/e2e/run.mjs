@@ -218,6 +218,9 @@ try {
   await browser.navigate("/library/" + garden.data.id, "Jardin de test");
   await browser.submit("Charger mes succès");
   await browser.wait(hasText("Steam ne fournit pas les succès de ce jeu"), "message lorsque les succès sont inaccessibles");
+  assert.equal((await admin.from("games").update({ genres: ["Aventure"] }).eq("id", garden.data.id)).error, null);
+  await browser.submit("Enregistrer la progression", { status: "paused" });
+  await browser.wait(hasText("Progression enregistrée"), "un jeu est mis en pause");
 
   await browser.navigate("/wishlist", "Wishlist");
   await browser.submit("Ajouter à la wishlist", { steamApp: "https://store.steampowered.com/app/4000000103/" });
@@ -241,6 +244,20 @@ try {
   assert.equal(await browser.evaluate(hasText("Orbite de test")), false);
   const advisorPath = await browser.evaluate("location.pathname + location.search");
   assert.match(advisorPath, /^\/game-advisor\?conversation=/);
+  await browser.navigate("/game-advisor", "Game Advisor");
+  await browser.evaluate(`[...document.querySelectorAll('main button[type=button]')].find((button) => button.textContent.includes("devrais-je reprendre")).click()`);
+  await browser.wait("document.querySelector('textarea').value.includes('devrais-je reprendre')", "saisie d’une demande de reprise");
+  await browser.submit("Poser la question");
+  await browser.wait(hasText("Jeux à reprendre dans ton backlog"), "réponse sur les jeux à reprendre");
+  await browser.wait(hasText("En pause"), "le statut de reprise est expliqué");
+  await browser.wait(hasText("Genres en commun avec Orbite de test (8/10)"), "le rapprochement cite une note enregistrée");
+  await browser.navigate("/game-advisor", "Game Advisor");
+  await browser.evaluate(`[...document.querySelectorAll('main button[type=button]')].find((button) => button.textContent.includes("le mieux notés")).click()`);
+  await browser.wait("document.querySelector('textarea').value.includes('le mieux notés')", "saisie d’une demande liée aux meilleures notes");
+  await browser.submit("Poser la question");
+  await browser.wait(hasText("Jeux proches de tes meilleures notes"), "réponse sur les meilleures notes");
+  await browser.wait(hasText("Genres en commun avec Orbite de test (8/10)"), "une recommandation cite le jeu le mieux noté");
+  await browser.wait(`Boolean(document.querySelector('a[href="/library/${garden.data.id}"]'))`, "la recommandation renvoie à la fiche du jeu");
   assert.deepEqual(browser.errors, []);
 
   const other = createLocalSession(stack.origin);

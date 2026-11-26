@@ -108,6 +108,8 @@ Ouvre **Game Advisor** après avoir synchronisé ta bibliothèque. OpenAI reçoi
 
 Les suggestions de détente et de similarité dépendent des genres renseignés. La recherche des abandons s’appuie sur les statuts personnels et sur le temps connu lorsqu’un seuil est indiqué. Un temps cumulé Steam ne permet pas de déterminer la durée d’une session ou de complétion. Ces durées restent indiquées comme inconnues.
 
+Pour **reprendre un jeu du backlog**, Game Advisor cherche parmi les jeux en cours ou en pause. Il privilégie ceux qui partagent des genres avec tes favoris ou avec des titres notés au moins 8/10. Pour trouver un **jeu proche de tes meilleures notes**, il prend comme référence les jeux qui ont obtenu ta note la plus élevée et affiche les titres de référence et leurs notes lorsque leurs genres correspondent.
+
 ## Vérifications
 
 Les scripts `dev` et `build` utilisent Webpack. Turbopack a besoin d’un port interne pour compiler le CSS dans cet environnement. Le contrôle des types de Next.js s’appuie sur l’API TypeScript, ce qui évite un processus détaché lors du build.

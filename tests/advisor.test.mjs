@@ -10,6 +10,9 @@ function response(args, name = advisorToolName) {
 test("Accepte seulement un appel de l’outil de bibliothèque et des arguments validés", () => {
   const plan = { intent: "abandoned", durationText: "5 heures" };
   assert.deepEqual(readInterpretation(response(plan)), plan);
+  for (const intent of ["resume", "similar_rated"]) {
+    assert.deepEqual(readInterpretation(response({ intent, durationText: null })), { intent, durationText: null });
+  }
   assert.equal(readInterpretation(response(plan, "unknown_tool")), null);
   assert.equal(readInterpretation(response({ ...plan, game: "Titre ajouté par le modèle" })), null);
   assert.equal(readInterpretation({ status: "incomplete", output: response(plan).output }), null);
@@ -53,4 +56,6 @@ test("Préserve la différence entre zéro et un temps de jeu indisponible", () 
     { ...game, id: "00000000-0000-4000-8000-000000000102", minutesPlayed: null },
   ] });
   assert.deepEqual(matches.games.map(({ minutesPlayed }) => minutesPlayed), [0, null]);
+  assert.deepEqual(matches.games[0].ratedReferences, []);
+  assert.equal(matches.games[0].favoriteGenreMatch, false);
 });

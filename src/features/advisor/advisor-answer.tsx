@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { formatCount, formatPlaytime } from "@/features/dashboard/library-summary";
+import { StatusLabel } from "@/features/library/library-ui";
 import { MutationForm } from "@/features/library/mutation-form";
 
 import { deleteAdvisorConversation } from "./actions";
@@ -16,6 +17,8 @@ const answerTitles = {
   abandoned: "Jeux marqués abandonnés",
   completion: "Durées de complétion indisponibles",
   similar: "Des genres en commun avec tes favoris",
+  resume: "Jeux à reprendre dans ton backlog",
+  similar_rated: "Jeux proches de tes meilleures notes",
   unsupported: "Ce que Game Advisor peut chercher",
 };
 
@@ -38,13 +41,19 @@ function describe({ intent, durationMinutes }: Answer) {
       return "GameVault reçoit le temps de jeu cumulé lorsque Steam le fournit. La durée nécessaire pour terminer un jeu reste inconnue.";
     case "similar":
       return "Le classement utilise les genres du catalogue que ces jeux partagent avec tes favoris.";
+    case "resume":
+      return "Ces jeux sont en cours ou en pause. Les genres en commun avec tes favoris et tes jeux notés 8/10 ou plus servent à les départager.";
+    case "similar_rated":
+      return "Ces jeux partagent des genres avec les titres auxquels tu as donné ta meilleure note.";
     case "unsupported":
-      return "Demande une suggestion dans ta bibliothèque, un jeu relaxant ou similaire à tes favoris, ou une liste de jeux abandonnés ou sans temps enregistré.";
+      return "Demande une suggestion dans ta bibliothèque, un jeu à reprendre ou un jeu proche de tes favoris ou de tes meilleures notes.";
   }
 }
 
 function emptyMatches(intent: Answer["intent"]) {
   if (intent === "similar") return "Aucun jeu avec un genre en commun. Les genres doivent être renseignés pour tes favoris et pour les jeux comparés.";
+  if (intent === "resume") return "Aucun jeu en cours ou en pause dans ton backlog.";
+  if (intent === "similar_rated") return "Aucun jeu comparable trouvé. Game Advisor a besoin de notes et de genres renseignés pour établir un rapprochement.";
   if (intent === "relaxing") return "Aucun jeu ne correspond aux genres de détente disponibles dans ta bibliothèque.";
   return "Aucun jeu ne correspond à cette demande.";
 }
@@ -70,6 +79,21 @@ export function AdvisorAnswer({ id, question, answer }: { id: string; question: 
                 <div className="min-w-0 flex-1 basis-40">
                   <Link href={"/library/" + game.id} className="break-words text-sm font-semibold hover:text-primary">{game.title}</Link>
                   {game.matchedGenres.length > 0 && <p className="mt-1 text-xs text-muted-foreground">{game.matchedGenres.join(" · ")}</p>}
+                  {intent === "resume" && (game.status === "playing" || game.status === "paused") && (
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <StatusLabel status={game.status} />
+                      {game.rating != null && <span>Ta note · {game.rating}/10</span>}
+                      {game.favorite && <span>Dans tes favoris</span>}
+                    </div>
+                  )}
+                  {intent === "resume" && game.favoriteGenreMatch && (
+                    <p className="mt-1 text-xs text-muted-foreground">Genre en commun avec tes favoris</p>
+                  )}
+                  {game.ratedReferences.length > 0 && (
+                    <p className="mt-1 break-words text-xs text-muted-foreground">
+                      Genres en commun avec {game.ratedReferences.map((reference) => reference.title + " (" + reference.rating + "/10)").join(", ")}
+                    </p>
+                  )}
                   {intent === "session" && (game.favorite || game.status === "playing") && (
                     <p className="mt-1 text-xs text-muted-foreground">{game.favorite ? "Dans tes favoris" : "En cours"}</p>
                   )}
