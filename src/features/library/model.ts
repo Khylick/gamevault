@@ -55,13 +55,14 @@ export type LibraryQuery = ReturnType<typeof parseLibraryQuery>;
 
 export function pageHref(path: string, query: LibraryQuery, page: number) {
   const defaults = parseLibraryQuery({});
-  const params = new URLSearchParams();
+  const [pathname, search] = path.split("?", 2);
+  const params = new URLSearchParams(search);
 
   for (const [key, value] of Object.entries({ ...query, page })) {
     if (value && value !== defaults[key as keyof LibraryQuery]) params.set(key, String(value));
   }
 
-  return params.size > 0 ? path + "?" + params.toString() : path;
+  return params.size > 0 ? pathname + "?" + params.toString() : pathname;
 }
 
 const date = new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeZone: "UTC" });

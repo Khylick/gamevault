@@ -44,8 +44,22 @@ const historySchema = z.object({
 }).array();
 
 const reportSchema = z.object({ summary: summarySchema, details: detailsSchema, history: historySchema });
+const year = z.number().int().min(1900).max(2100);
+const annualReportSchema = z.object({
+  year,
+  availableYears: year.array(),
+  firstObservedOn: z.iso.date().nullable(),
+  firstSampleOn: z.iso.date().nullable(),
+  lastSampleOn: z.iso.date().nullable(),
+  minutes: count.nullable(),
+  corrections: count,
+  mostPlayed: rankedGame.array(),
+  completed: datedGame.extend({ date: z.iso.date() }).array(),
+  bestRated: datedGame.pick({ id: true, title: true }).extend({ rating: z.number().int().min(1).max(10), position: count.positive() }).array(),
+});
 
 export type AnalyticsReport = z.infer<typeof reportSchema>;
+export type AnnualLibraryReport = z.infer<typeof annualReportSchema>;
 export type AnalyticsPeriod = "week" | "month";
 
 export async function readDashboard({ db }: LibraryViewer) {
@@ -58,4 +72,10 @@ export async function readAnalytics({ db }: LibraryViewer, period: AnalyticsPeri
   const { data, error } = await db.rpc("analytics_report", { p_period: period });
   if (error) throw new Error("Impossible de lire les statistiques.");
   return reportSchema.parse(data);
+}
+
+export async function readAnnualLibraryReport({ db }: LibraryViewer, selectedYear: number | null) {
+  const { data, error } = await db.rpc("annual_library_report", { p_year: selectedYear });
+  if (error) throw new Error("Impossible de lire le bilan annuel.");
+  return annualReportSchema.parse(data);
 }

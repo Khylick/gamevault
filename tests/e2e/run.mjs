@@ -258,6 +258,20 @@ try {
   await browser.wait(hasText("Jeux proches de tes meilleures notes"), "réponse sur les meilleures notes");
   await browser.wait(hasText("Genres en commun avec Orbite de test (8/10)"), "une recommandation cite le jeu le mieux noté");
   await browser.wait(`Boolean(document.querySelector('a[href="/library/${garden.data.id}"]'))`, "la recommandation renvoie à la fiche du jeu");
+  await browser.navigate("/library/" + garden.data.id, "Jardin de test");
+  await browser.submit("Enregistrer la progression", { status: "completed", finishedOn: "2025-01-21" });
+  await browser.wait(hasText("Progression enregistrée"), "enregistrement d’une date de fin pour le bilan");
+  await browser.navigate("/analytics", "Statistiques");
+  await browser.evaluate(`document.querySelector('a[href="/analytics?view=annual"]').click()`);
+  await browser.wait(hasText("Année du bilan"), "accès à l’onglet du bilan annuel");
+  await browser.submit("Afficher", { year: "2025" });
+  await browser.wait(hasText("Temps de jeu observé en 2025"), "sélection d’une année du bilan");
+  await browser.wait(hasText("Jardin de test"), "jeu terminé dans l’année sélectionnée");
+  await browser.navigate("/analytics?view=annual&year=2026", "Statistiques");
+  await browser.wait(hasText("Historique Steam disponible depuis le"), "couverture des relevés Steam");
+  await browser.wait(hasText("8 / 10"), "note du jeu dans le bilan");
+  await browser.evaluate(`document.querySelector('a[href="/classements?year=2026"]').click()`);
+  await browser.wait(hasText("Tes jeux notés pour 2026."), "lien vers le classement filtré");
   assert.deepEqual(browser.errors, []);
 
   const other = createLocalSession(stack.origin);
@@ -274,6 +288,8 @@ try {
   const privateRankings = await (await other.request("/classements")).text();
   assert.equal(privateRankings.includes("Orbite de test"), false);
   assert.ok(privateRankings.includes("Aucun jeu noté"));
+  const privateAnnual = await (await other.request("/analytics?view=annual&year=2025")).text();
+  assert.equal(privateAnnual.includes("Jardin de test"), false);
   const privateWishlist = await (await other.request("/wishlist")).text();
   assert.equal(privateWishlist.includes("Horizon convoité"), false);
   const privateAnswer = await (await other.request(advisorPath)).text();

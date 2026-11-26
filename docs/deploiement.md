@@ -44,6 +44,7 @@ npx --yes supabase@3.3.0 db push --remote
 
 ## Vérifier le parcours hébergé
 
+- Dans **Analytics → Bilan annuel**, change d’année et vérifie les dates de couverture des relevés, les jeux terminés et le lien vers le classement de l’année.
 - Après avoir associé un compte Steam de test, active la synchronisation automatique dans **Paramètres** et vérifie le résultat du premier passage et les changements de bibliothèque.
 - Dans **Game Advisor**, pose une question sur les jeux à reprendre, puis une sur les jeux proches de tes meilleures notes. Vérifie que les statuts, les genres et les notes cités correspondent à ta bibliothèque.
 - Note un jeu dont l’année de sortie Steam est connue et vérifie son groupe dans **Classements**. Renseigne une autre année sur sa fiche, puis vérifie qu’il rejoint le groupe correspondant.

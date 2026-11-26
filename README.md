@@ -95,6 +95,7 @@ Ouvre **Classements** pour retrouver tes jeux notés sur 10, regroupés par ann�
 
 ## Comprendre les statistiques
 
+- Dans **Analytics → Bilan annuel**, choisis une année pour retrouver le temps observé entre relevés Steam, tes jeux les plus joués, les jeux terminés avec une date de fin et tes meilleures notes. Le bilan indique les dates des relevés disponibles. Une année peut avoir des notes ou des jeux terminés alors que son temps de jeu reste inconnu.
 - Depuis le tableau de bord, **Personnaliser** permet de choisir quels blocs afficher et de changer leur ordre. Enregistre la disposition pour la retrouver sur ton compte. Tu peux retrouver l’ordre et la visibilité d’origine avec **Rétablir la disposition par défaut**, puis enregistrer.
 - Le tableau de bord additionne les temps de jeu connus et indique combien de jeux disposent d’une mesure si la couverture est partielle.
 - Le bloc **Joués récemment** affiche les durées sur 14 jours au dernier import, avec la date de dernière session si elle est connue. En l’absence d’activité mesurée sur cette période, le tableau de bord affiche les dernières sessions connues lorsqu’elles sont disponibles.

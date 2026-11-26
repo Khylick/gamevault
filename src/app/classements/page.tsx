@@ -10,6 +10,7 @@ import { getLibraryViewer } from "@/features/library/data";
 import { GameCover } from "@/features/library/game-cover";
 import { LibraryAccess, PageLinks } from "@/features/library/library-ui";
 import { pageSize, parseLibraryQuery } from "@/features/library/model";
+import { parseCalendarYear } from "@/lib/year";
 
 export const metadata: Metadata = { title: "Classements" };
 
@@ -26,22 +27,31 @@ type RankedGame = {
 };
 
 export default async function RankingsPage({ searchParams }: PageProps<"/classements">) {
-  const query = parseLibraryQuery({ page: (await searchParams).page });
+  const params = await searchParams;
+  const query = parseLibraryQuery({ page: params.page });
+  const year = parseCalendarYear(params.year);
+  const path = year === null ? "/classements" : "/classements?year=" + year;
   const viewer = await getLibraryViewer();
-  const heading = <PageHeading title="Classements" description="Tes jeux classés par année et par note." />;
+  const heading = (
+    <PageHeading title="Classements" description={year === null ? "Tes jeux classés par année et par note." : "Tes jeux notés pour " + year + "."}>
+      {year !== null && <Link href="/classements" className="text-sm font-medium text-primary hover:underline">Toutes les années</Link>}
+    </PageHeading>
+  );
 
   if (!viewer) return <div className="grid gap-6">{heading}<LibraryAccess /></div>;
 
   const start = (query.page - 1) * pageSize;
-  const { data, count, error } = await viewer.db.from("personal_game_rankings")
+  const listing = viewer.db.from("personal_game_rankings")
     .select("game_id,name,platform,external_id,cover_url,rating,ranking_year,uses_release_year,ranking_position", { count: "exact" })
-    .eq("user_id", viewer.userId)
+    .eq("user_id", viewer.userId);
+  if (year !== null) listing.eq("ranking_year", year);
+  const { data, count, error } = await listing
     .order("ranking_year", { ascending: false, nullsFirst: false })
     .order("ranking_position").order("name").order("game_id")
     .range(start, start + pageSize - 1)
     .overrideTypes<RankedGame[], { merge: false }>();
 
-  if (query.page > 1 && (error?.code === "PGRST103" || (!error && !data?.length))) redirect("/classements");
+  if (query.page > 1 && (error?.code === "PGRST103" || (!error && !data?.length))) redirect(path);
   if (error) throw new Error("Impossible de lire tes classements.");
 
   const years = new Map<number | null, RankedGame[]>();
@@ -82,10 +92,11 @@ export default async function RankingsPage({ searchParams }: PageProps<"/classem
               </Card>
             </section>
           ))}
-          <PageLinks path="/classements" count={count ?? 0} query={query} page={query.page} />
+          <PageLinks path={path} count={count ?? 0} query={query} page={query.page} />
         </>
       ) : (
-        <EmptyState icon={Trophy} title="Aucun jeu noté" description="Ajoute une note dans une fiche pour retrouver le jeu dans ton classement.">
+        <EmptyState icon={Trophy} title={year === null ? "Aucun jeu noté" : "Aucune note pour " + year}
+          description="Ajoute une note dans une fiche pour retrouver le jeu dans ton classement.">
           <Link href="/library" className="inline-flex min-h-11 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground">
             Ouvrir la bibliothèque
           </Link>
