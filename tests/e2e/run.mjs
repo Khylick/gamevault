@@ -137,6 +137,9 @@ try {
 
   browser = await openBrowser(stack, owner.cookies);
   const hasText = (text) => "document.querySelector('main').innerText.includes(" + JSON.stringify(text) + ")";
+  const tonightText = (text) => "document.querySelector('#tonight-title').closest('section').innerText.includes(" + JSON.stringify(text) + ")";
+  const selectMood = (mood) => browser.evaluate(`document.querySelector('input[name="tonight-mood"][value="${mood}"]').click()`);
+  const suggestionLinks = "Array.from(document.querySelector('#tonight-title').closest('section').querySelectorAll('a'), (link) => link.getAttribute('href'))";
   const dashboardOrder = 'Array.from(document.querySelectorAll("main [id^=dashboard-]"), (block) => block.id).join(",")';
   const editorPath = "/dashboard/personnaliser";
   const editorTitle = "Personnaliser le tableau de bord";
@@ -144,6 +147,10 @@ try {
   await browser.navigate("/", "Tableau de bord");
   await browser.wait(hasText("30\u00a0min sur 14 jours au dernier import."), "durée récente issue de Steam dans le tableau de bord");
   await browser.wait(hasText("Date inconnue"), "absence de date exacte de dernière session");
+  await browser.wait(tonightText("Jardin de test"), "suggestion d’un jeu avec zéro minute connue");
+  assert.equal(await browser.evaluate(tonightText("Orbite de test")), false);
+  await selectMood("resume");
+  await browser.wait(tonightText("Marque un jeu"), "état vide des jeux à reprendre");
   assert.equal(await browser.evaluate(dashboardOrder), "dashboard-hero,dashboard-metrics,dashboard-recent,dashboard-top");
   await browser.evaluate(`document.querySelector('main a[href="${editorPath}"]').click()`);
   await browser.wait(hasText(editorTitle), "ouverture de la personnalisation du tableau de bord");
@@ -251,6 +258,17 @@ try {
   await browser.submit("Enregistrer la progression", { status: "paused" });
   await browser.wait(hasText("Progression enregistrée"), "un jeu est mis en pause");
 
+  await browser.navigate("/", "Tableau de bord");
+  await browser.wait(tonightText("En pause"), "suggestion d’un jeu mis en pause");
+  assert.deepEqual(await browser.evaluate(suggestionLinks), ["/library/" + garden.data.id, "/library/" + gameId]);
+  await selectMood("discover");
+  await browser.wait(tonightText("Les jeux encore à découvrir"), "un jeu marqué en pause quitte les découvertes");
+  await selectMood("favorite");
+  await browser.wait(tonightText("Tu lui as donné 8/10"), "suggestion d’un favori avec sa note");
+  assert.deepEqual(await browser.evaluate(suggestionLinks), ["/library/" + gameId]);
+  await browser.evaluate("document.querySelector('#tonight-title').closest('section').querySelector('a').click()");
+  await browser.wait(hasText("Repère de session privé"), "le favori ouvre la fiche avec le journal");
+
   await browser.navigate("/wishlist", "Wishlist");
   await browser.submit("Ajouter à la wishlist", { steamApp: "https://store.steampowered.com/app/4000000103/" });
   await browser.wait(hasText("Horizon convoité"), "jeu hors bibliothèque ajouté à la wishlist");
@@ -311,7 +329,9 @@ try {
   assert.ok((await (await other.request("/settings")).text()).includes("Connexion à GameVault"));
   await other.followAuthEmail(stack.config, otherEmail, "/settings");
   assert.ok((await (await other.request("/settings")).text()).includes(otherEmail));
-  assert.match(await (await other.request("/")).text(), /<html[^>]*data-theme="midnight"/);
+  const otherHome = await (await other.request("/")).text();
+  assert.match(otherHome, /<html[^>]*data-theme="midnight"/);
+  assert.equal(otherHome.includes('id="tonight-title"'), false);
   const privateGame = await (await other.request("/library/" + gameId)).text();
   assert.equal(privateGame.includes("Orbite de test"), false);
   assert.equal(privateGame.includes("Charger mes succès"), false);

@@ -11,6 +11,8 @@ import { MostPlayed, RecentlyPlayed } from "./dashboard-activity";
 import { DashboardMetrics } from "./dashboard-metrics";
 import { defaultDashboardLayout, type DashboardLayout } from "./layout";
 import { formatPlayDate, formatPlaytime, type ActivityGame, type LibrarySummary } from "./library-summary";
+import type { TonightSuggestions } from "./tonight-model";
+import { TonightPicks } from "./tonight-picks";
 
 function DashboardHero({ game, showActivity, demo }: { game?: ActivityGame; showActivity: boolean; demo: boolean }) {
   const recentMinutes = game && "recentMinutes" in game ? game.recentMinutes : null;
@@ -61,8 +63,8 @@ function DashboardHero({ game, showActivity, demo }: { game?: ActivityGame; show
   );
 }
 
-export function Dashboard({ summary, layout, demo = false }: {
-  summary: LibrarySummary | null; layout?: DashboardLayout | null; demo?: boolean;
+export function Dashboard({ summary, layout, suggestions, demo = false }: {
+  summary: LibrarySummary | null; layout?: DashboardLayout | null; suggestions?: TonightSuggestions; demo?: boolean;
 }) {
   const { block_order, hidden_blocks } = layout ?? defaultDashboardLayout;
   const visible = block_order.filter((block) => !hidden_blocks.includes(block));
@@ -96,6 +98,8 @@ export function Dashboard({ summary, layout, demo = false }: {
         )}
       </PageHeading>
 
+      {hasLibrary && suggestions && <TonightPicks suggestions={suggestions} />}
+
       {displayOrder.length > 0 && (
         <div className="grid gap-x-4 gap-y-5 sm:gap-y-6 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
           {displayOrder.map((block) => (
@@ -106,7 +110,7 @@ export function Dashboard({ summary, layout, demo = false }: {
         </div>
       )}
       {visible.length === 0 ? (
-        <EmptyState icon={SlidersHorizontal} title="Tous les blocs sont masqués" description="Utilise Personnaliser pour réafficher les blocs de ton choix." />
+        <EmptyState icon={SlidersHorizontal} title="Les blocs personnalisables sont masqués" description="Utilise Personnaliser pour réafficher les blocs de ton choix." />
       ) : !hasLibrary && (
         <EmptyState
           icon={LibraryBig}
