@@ -39,6 +39,10 @@ export type LibraryEntry = {
 
 export type Collection = { id: string; name: string; description: string | null };
 
+export type JournalNote = { id: string; content: string; created_at: string };
+export const journalNoteMaxLength = 2000;
+export const journalPageSize = 10;
+
 const filters = z.object({
   q: z.string().trim().max(100).catch(""),
   genre: z.string().trim().max(120).catch(""),

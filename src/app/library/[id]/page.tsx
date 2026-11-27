@@ -8,16 +8,19 @@ import { Card } from "@/components/ui/card";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { AchievementPanel } from "@/features/achievements/achievement-panel";
 import { saveFavorite } from "@/features/library/actions";
-import { getLibraryViewer, listCollections, listMemberships, readGame } from "@/features/library/data";
+import { getLibraryViewer, listCollections, listMemberships, readGame, readGameJournal } from "@/features/library/data";
 import { GameCover } from "@/features/library/game-cover";
 import { GameCollections, ProgressForm, ReviewForm } from "@/features/library/game-forms";
+import { GameJournal } from "@/features/library/game-journal";
 import { LibraryAccess, Playtime, StatusLabel } from "@/features/library/library-ui";
 import { formatLibraryDate } from "@/features/library/model";
 import { MutationForm } from "@/features/library/mutation-form";
 
 export const metadata: Metadata = { title: "Fiche de jeu" };
 
-export default async function GamePage({ params }: PageProps<"/library/[id]">) {
+const journalPageSchema = z.coerce.number().int().min(1).max(10_000).catch(1);
+
+export default async function GamePage({ params, searchParams }: PageProps<"/library/[id]">) {
   const id = z.uuid().safeParse((await params).id);
   if (!id.success) notFound();
 
@@ -25,7 +28,12 @@ export default async function GamePage({ params }: PageProps<"/library/[id]">) {
   if (!viewer) return <LibraryAccess />;
   const game = await readGame(viewer, id.data);
   if (!game) notFound();
-  const [collections, memberships] = await Promise.all([listCollections(viewer), listMemberships(viewer, id.data)]);
+  const { journalPage } = await searchParams;
+  const [collections, memberships, journal] = await Promise.all([
+    listCollections(viewer),
+    listMemberships(viewer, id.data),
+    readGameJournal(viewer, id.data, journalPageSchema.parse(journalPage)),
+  ]);
 
   return (
     <div className="grid gap-6">
@@ -59,6 +67,7 @@ export default async function GamePage({ params }: PageProps<"/library/[id]">) {
         <ProgressForm game={game} />
         <ReviewForm game={game} />
       </div>
+      <GameJournal gameId={id.data} journal={journal} />
       <GameCollections gameId={id.data} collections={collections} memberships={memberships} />
       {game.platform === "steam" && <AchievementPanel key={id.data} gameId={id.data} />}
     </div>

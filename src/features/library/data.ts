@@ -2,7 +2,7 @@ import "server-only";
 
 import { createSessionClient } from "@/lib/supabase/session";
 
-import { pageSize, type Collection, type LibraryEntry, type LibraryQuery } from "./model";
+import { journalPageSize, pageSize, type Collection, type JournalNote, type LibraryEntry, type LibraryQuery } from "./model";
 
 export async function getLibraryViewer(writable = false) {
   const db = await createSessionClient(writable);
@@ -86,6 +86,22 @@ export async function readGame({ db, userId }: LibraryViewer, gameId: string) {
     .eq("game_id", gameId).maybeSingle<LibraryEntry>();
   if (error) throw new Error("Impossible de lire ce jeu.");
   return data;
+}
+
+export async function readGameJournal(viewer: LibraryViewer, gameId: string, page: number) {
+  const { db, userId } = viewer;
+  const start = (page - 1) * journalPageSize;
+  const { data, error, count } = await db.from("game_journal_notes").select("id,content,created_at", { count: "exact" })
+    .eq("user_id", userId).eq("game_id", gameId)
+    .order("created_at", { ascending: false }).order("id", { ascending: false })
+    .range(start, start + journalPageSize - 1)
+    .overrideTypes<JournalNote[], { merge: false }>();
+  if (page > 1 && (error?.code === "PGRST103" || (!error && !data?.length))) {
+    return readGameJournal(viewer, gameId, 1);
+  }
+  if (error) return null;
+
+  return { notes: data ?? [], page, pages: Math.ceil((count ?? 0) / journalPageSize) };
 }
 
 export async function readCollection({ db, userId }: LibraryViewer, id: string) {

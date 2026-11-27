@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { getLibraryViewer, type LibraryViewer } from "./data";
-import { gameStatus } from "./model";
+import { gameStatus, journalNoteMaxLength } from "./model";
 
 export type MutationResult = { message: string; error?: boolean } | null;
 
@@ -29,7 +29,7 @@ async function mutate<T>(
   form: FormData,
   write: (viewer: LibraryViewer, values: T) => PromiseLike<{ error: { code: string } | null }>,
   success: string,
-  duplicate?: string,
+  options?: { duplicate?: string; revalidate?: (values: T) => void },
 ): Promise<MutationResult> {
   const values = schema.safeParse(Object.fromEntries(form));
   if (!values.success) {
@@ -42,11 +42,12 @@ async function mutate<T>(
 
   const { error } = await write(viewer, values.data);
   if (error) return {
-    message: error.code === "23505" && duplicate ? duplicate : "La modification n’a pas pu être enregistrée.",
+    message: error.code === "23505" && options?.duplicate ? options.duplicate : "La modification n’a pas pu être enregistrée.",
     error: true,
   };
 
-  invalidateLibrary();
+  if (options?.revalidate) options.revalidate(values.data);
+  else invalidateLibrary();
   return { message: success };
 }
 
@@ -94,20 +95,43 @@ export async function saveReview(_previous: MutationResult, form: FormData) {
   return result;
 }
 
+const journalNote = z.object({ gameId, noteId: z.uuid() });
+const journalRevalidation = { revalidate: ({ gameId }: { gameId: string }) => revalidatePath("/library/" + gameId) };
+
+export async function saveJournalNote(_previous: MutationResult, form: FormData) {
+  const schema = journalNote.partial({ noteId: true }).extend({
+    content: z.string().trim().refine((value) => value.length > 0 && value.length <= journalNoteMaxLength,
+      { message: `Saisis une note de 1 à ${journalNoteMaxLength.toLocaleString("fr-FR")} caractères.` }),
+  });
+  return mutate(schema, form, ({ db, userId }, values) => {
+    const journal = db.from("game_journal_notes");
+    if (!values.noteId) return journal.insert({ user_id: userId, game_id: values.gameId, content: values.content });
+    return journal.update({ content: values.content }).eq("user_id", userId)
+      .eq("game_id", values.gameId).eq("id", values.noteId).select("id").single();
+  }, "Note enregistrée.", journalRevalidation);
+}
+
+export async function deleteJournalNote(_previous: MutationResult, form: FormData) {
+  return mutate(journalNote, form,
+    ({ db, userId }, values) => db.from("game_journal_notes").delete().eq("user_id", userId)
+      .eq("game_id", values.gameId).eq("id", values.noteId).select("id").single(),
+    "Note supprimée.", journalRevalidation);
+}
+
 const collectionFields = z.object({ name: z.string().trim().min(1).max(120), description: optionalText(1000) });
 const duplicateCollection = "Tu as déjà une collection portant ce nom.";
 
 export async function createCollection(_previous: MutationResult, form: FormData) {
   return mutate(collectionFields, form,
     ({ db, userId }, values) => db.from("collections").insert({ user_id: userId, ...values }),
-    "Collection créée.", duplicateCollection);
+    "Collection créée.", { duplicate: duplicateCollection });
 }
 
 export async function updateCollection(_previous: MutationResult, form: FormData) {
   return mutate(collectionFields.extend({ collectionId }), form,
     ({ db, userId }, { collectionId, ...values }) => db.from("collections").update(values)
       .eq("user_id", userId).eq("id", collectionId).select("id").single(),
-    "Collection actualisée.", duplicateCollection);
+    "Collection actualisée.", { duplicate: duplicateCollection });
 }
 
 export async function deleteCollection(_previous: MutationResult, form: FormData) {

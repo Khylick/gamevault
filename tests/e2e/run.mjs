@@ -186,6 +186,28 @@ try {
   await browser.wait(hasText("Explore une orbite inconnue."), "description enrichie visible dans la fiche");
   await browser.wait(hasText("Temps sur 14 jours au dernier import"), "affichage de la période dans la fiche de jeu");
   await browser.wait(hasText("30\u00a0min"), "durée récente issue de Steam dans la fiche de jeu");
+  const fillNote = (selector, content) => browser.evaluate(`(() => {
+    const field = document.querySelector(${JSON.stringify(selector)});
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value").set.call(field, ${JSON.stringify(content)});
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+  })()`);
+  await fillNote("#journal textarea", "Repère de session privé");
+  await browser.submit("Ajouter une note");
+  await browser.wait(hasText("Repère de session privé"), "ajout d’une note de journal");
+  await browser.wait('document.querySelector("#journal textarea").value === ""', "effacement du brouillon après la sauvegarde");
+  await fillNote("#journal textarea", "Deuxième note");
+  await browser.submit("Ajouter une note");
+  await browser.wait('document.querySelector("#journal li:first-child")?.innerText.includes("Deuxième note")', "la dernière note apparaît en premier");
+  assert.equal(await browser.evaluate('Boolean(document.querySelector("#journal li time").dateTime)'), true);
+  await browser.evaluate('document.querySelector("#journal li:first-child summary").click()');
+  await fillNote("#journal li:first-child textarea", "Deuxième note modifiée");
+  await browser.submit("Enregistrer la note");
+  await browser.wait(hasText("Deuxième note modifiée"), "modification de la note");
+  await browser.navigate("/library/" + gameId, "Orbite de test");
+  assert.equal(await browser.evaluate(hasText("Deuxième note modifiée")), true);
+  await browser.evaluate('document.querySelector("#journal li:first-child summary").click()');
+  await browser.submit("Supprimer la note");
+  await browser.wait('document.querySelectorAll("#journal li").length === 1', "suppression de la note");
   assert.equal(await browser.evaluate(hasText("Premier vol")), false);
   await browser.submit("Charger mes succès");
   await browser.wait(hasText("1 / 2"), "nombre de succès débloqués");
@@ -293,6 +315,7 @@ try {
   const privateGame = await (await other.request("/library/" + gameId)).text();
   assert.equal(privateGame.includes("Orbite de test"), false);
   assert.equal(privateGame.includes("Charger mes succès"), false);
+  assert.equal(privateGame.includes("Repère de session privé"), false);
   const privateRankings = await (await other.request("/classements")).text();
   assert.equal(privateRankings.includes("Orbite de test"), false);
   assert.ok(privateRankings.includes("Aucun jeu noté"));
