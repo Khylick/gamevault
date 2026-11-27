@@ -1,9 +1,11 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { themeSchema } from "@/features/appearance/themes";
 import { buildSteamSignInUrl, getSteamStateCookieOptions, steamStateCookie, steamStateMaxAge } from "@/features/steam/openid";
 import { settingsLocation } from "@/features/steam/settings-notice";
 import { getSteamAccount, hasSteamApiKey, issueSteamChallenge, synchronizeSteamLibrary } from "@/features/steam/steam-service";
@@ -96,6 +98,18 @@ async function requireUser() {
   if (error || !data.user) redirect(settingsLocation("session-required"));
 
   return { supabase, userId: data.user.id };
+}
+
+export async function saveTheme(formData: FormData) {
+  const { supabase, userId } = await requireUser();
+  const theme = themeSchema.safeParse(formData.get("theme"));
+  if (!theme.success) redirect(settingsLocation("theme-invalid"));
+
+  const { error } = await supabase.from("appearance_preferences").upsert({ user_id: userId, theme: theme.data });
+  if (error) redirect(settingsLocation("service-error"));
+
+  revalidatePath("/", "layout");
+  redirect(settingsLocation("theme-saved"));
 }
 
 export async function updatePassword(formData: FormData) {

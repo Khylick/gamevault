@@ -17,7 +17,7 @@ function DashboardHero({ game, showActivity, demo }: { game?: ActivityGame; show
   const activityLink = game && showActivity;
   const gameLink = game && !demo && !activityLink;
   return (
-    <Card className="relative isolate flex min-h-63 items-center overflow-hidden border-violet-400/25 bg-[#171326]">
+    <Card className="relative isolate flex min-h-63 items-center overflow-hidden border-primary/25 bg-hero">
       {game?.artwork ? (
         <GameCover game={game.artwork} className="absolute inset-y-0 right-0 -z-20 hidden w-1/2 opacity-75 md:grid" />
       ) : <Image
@@ -39,7 +39,7 @@ function DashboardHero({ game, showActivity, demo }: { game?: ActivityGame; show
         <h2 className="break-words text-3xl leading-tight font-semibold tracking-[-0.05em] sm:text-[2.75rem]">
           {game ? game.title : "Ta bibliothèque Steam"}
         </h2>
-        <p className="mt-2.5 max-w-sm text-base text-[#d2cbe3]">
+        <p className="mt-2.5 max-w-sm text-base text-hero-muted">
           {recentMinutes !== null ? (
             <>{formatPlaytime(recentMinutes)} sur 14 jours au dernier import.</>
           ) : game?.lastPlayedOn ? (
@@ -50,7 +50,7 @@ function DashboardHero({ game, showActivity, demo }: { game?: ActivityGame; show
         </p>
         <Link
           href={activityLink ? "#jeux-recents" : gameLink ? "/library/" + game.id : "/settings"}
-          className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-[#d0c0ff]"
+          className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/85"
         >
           {activityLink ? <History className="size-4" aria-hidden="true" /> : gameLink
             ? <LibraryBig className="size-4" aria-hidden="true" /> : <Cable className="size-4" aria-hidden="true" />}

@@ -86,7 +86,7 @@ export function MostPlayed({ summary, linked = true }: { summary: LibrarySummary
                       </span>
                     </div>
                     <div aria-hidden="true" className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">
-                      <div className="h-full rounded-full bg-linear-to-r from-violet-600 to-primary" style={{ width: share * 100 + "%" }} />
+                      <div className="h-full rounded-full bg-primary" style={{ width: share * 100 + "%" }} />
                     </div>
                   </li>
                 );

@@ -17,6 +17,8 @@ export const settingsNotices = {
   "signed-out": { message: "Tu es déconnecté de GameVault.", success: true },
   "configuration": { message: "La configuration serveur est incomplète." },
   "service-error": { message: "GameVault n’a pas pu terminer l’opération. Réessaie dans quelques instants." },
+  "theme-invalid": { message: "Choisis un thème parmi ceux proposés." },
+  "theme-saved": { message: "Ton thème a été enregistré.", success: true },
   "steam-cancelled": { message: "Tu as annulé la connexion Steam." },
   "steam-invalid": { message: "La réponse de connexion Steam n’a pas pu être validée. Relance la connexion." },
   "steam-expired": { message: "Cette demande de connexion Steam a expiré. Relance la connexion." },

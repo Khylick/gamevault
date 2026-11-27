@@ -16,6 +16,7 @@ import { getAppOrigin } from "@/lib/supabase/config";
 import { createSessionClient } from "@/lib/supabase/session";
 
 import { setSteamAutoSync, signOut, startSteamLink, syncSteamLibrary } from "./actions";
+import { AppearanceSettings } from "./appearance-settings";
 import { PasswordForm, SignedOutForm } from "./auth-forms";
 
 export const metadata: Metadata = { title: "Paramètres" };
@@ -154,7 +155,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
 
   return (
     <div className="grid gap-6">
-      <PageHeading title="Paramètres" description="Gère ton compte GameVault et ta bibliothèque Steam." />
+      <PageHeading title="Paramètres" description="Gère ton compte, l’apparence de GameVault et ta bibliothèque Steam." />
       {notice && (
         <p
           role="status"
@@ -187,6 +188,7 @@ export default async function SettingsPage({ searchParams }: PageProps<"/setting
               </form>
             </div>
           </Card>
+          <AppearanceSettings />
           <SteamConnection supabase={supabase} userId={claims.sub} />
         </>
       )}

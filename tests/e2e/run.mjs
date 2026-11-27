@@ -163,6 +163,13 @@ try {
   assert.equal(await browser.evaluate(`document.querySelector('#dashboard-hero a').getAttribute('href')`), "/library/" + gameId);
   await browser.viewport(390, 900);
   await browser.navigate("/settings", "Paramètres");
+  assert.equal(await browser.evaluate("document.documentElement.dataset.theme"), "midnight");
+  await browser.evaluate(`document.querySelector('input[name="theme"][value="light"]').click()`);
+  await browser.submit("Enregistrer le thème");
+  await browser.wait(hasText("Ton thème a été enregistré."), "confirmation de l’enregistrement du thème");
+  await browser.wait('getComputedStyle(document.documentElement).colorScheme === "light"', "application du thème sans rechargement manuel");
+  assert.equal(await browser.evaluate('document.querySelector(\'input[name="theme"]:checked\').value'), "light");
+  assert.match(await (await owner.request("/")).text(), /<html[^>]*data-theme="light"/);
   await browser.submit("Enrichir les fiches Steam");
   await browser.wait(hasText("1 fiche enrichie."), "enrichissement d’un jeu déjà importé");
   await browser.wait(hasText("1 fiche prête · 1 à compléter"), "suivi de la progression de l’enrichissement");
@@ -282,6 +289,7 @@ try {
   assert.ok((await (await other.request("/settings")).text()).includes("Connexion à GameVault"));
   await other.followAuthEmail(stack.config, otherEmail, "/settings");
   assert.ok((await (await other.request("/settings")).text()).includes(otherEmail));
+  assert.match(await (await other.request("/")).text(), /<html[^>]*data-theme="midnight"/);
   const privateGame = await (await other.request("/library/" + gameId)).text();
   assert.equal(privateGame.includes("Orbite de test"), false);
   assert.equal(privateGame.includes("Charger mes succès"), false);

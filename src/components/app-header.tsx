@@ -13,7 +13,7 @@ const links = [dashboardLink, ...sections.map(({ slug, label, icon }) => ({ labe
 function Brand({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <Link href="/" onNavigate={onNavigate} className="inline-flex items-center gap-3 rounded-lg">
-      <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-[0_3px_20px_#8b5cf640]">
+      <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20">
         <Layers3 className="size-5" strokeWidth={2.25} aria-hidden="true" />
       </span>
       <span className="text-xl font-semibold tracking-[-0.045em]">GameVault</span>

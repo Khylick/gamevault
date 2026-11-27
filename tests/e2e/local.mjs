@@ -128,7 +128,7 @@ export async function prepareLocalStack() {
     const next = join(appDirectory, "node_modules/next/dist/bin/next");
     run(execPath, [next, "build", "--webpack"], { cwd: appDirectory, env: testEnv, label: "Build isolé", private: true });
     app = spawn(execPath, [
-      "--import", fileURLToPath(new URL("./providers.mjs", import.meta.url)), next,
+      "--import", new URL("./providers.mjs", import.meta.url).href, next,
       "start", "--hostname", "127.0.0.1", "--port", String(appPort),
     ], { cwd: appDirectory, env: testEnv, stdio: "ignore" });
     await waitFor(() => fetch(origin + "/settings").then(({ ok }) => ok).catch(() => false), "démarrage Next.js");

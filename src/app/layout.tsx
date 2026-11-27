@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { AppHeader } from "@/components/app-header";
+import { readTheme } from "@/features/appearance/preferences";
 
 import "./globals.css";
 
@@ -9,9 +10,11 @@ export const metadata: Metadata = {
   description: "Un espace personnel pour organiser et retrouver tes jeux Steam.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const theme = await readTheme();
+
   return (
-    <html lang="fr" className="dark">
+    <html lang="fr" data-theme={theme}>
       <body className="flex min-h-dvh flex-col bg-background font-sans text-foreground antialiased">
         <a
           href="#contenu"
